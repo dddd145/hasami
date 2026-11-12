@@ -500,6 +500,12 @@
       setSyncBusy(true);
       try {
         const res = await callGasApi({ action: 'getState', chatId: chatId });
+        if (res && res.stopped) {
+          if (pollTimer) clearTimeout(pollTimer);
+          pollTimer = null;
+          setRoomStatus(false, "🛑 停止中（「鋏さん」で再開）");
+          return;
+        }
         if (res && res.ok && res.state && reqVer === syncVersion) {
           renderState(res.state);
           updateConnectedStatus(res.state.players);
