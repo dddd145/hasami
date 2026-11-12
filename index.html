@@ -115,7 +115,7 @@
       </div>
       <div class="board-tools">
         <button class="tool-btn" onclick="addProxyMember()">＋ メンバー追加</button>
-        <button class="tool-btn tool-btn-del" onclick="resetSelectedCurrent()">選択中の今回を0に戻す</button>
+        <button class="tool-btn tool-btn-del" onclick="undoSelected()">↩ 選択中の1つ戻す</button>
       </div>
     </div>
   </div>
@@ -226,8 +226,25 @@
       }
 
       renderState(latestState);
+      await registerSelfOnJoin();
       startFastPolling();
     };
+
+    // 開いた瞬間に全員のリストへ自動追加
+    async function registerSelfOnJoin() {
+      if (!myUserId || myUserId === 'unknown_user') return;
+      try {
+        const res = await callGasApi({
+          action: 'join',
+          chatId: chatId,
+          userId: myUserId,
+          userName: myUserName
+        });
+        if (res.ok && res.state) {
+          renderState(res.state);
+        }
+      } catch (e) {}
+    }
 
     function setSyncBusy(busy) {
       const dot = document.getElementById('syncDot');
@@ -321,6 +338,22 @@
       return '';
     }
 
+    function recalcLocalPlayer(p) {
+      const ops = Array.isArray(p.ops) ? p.ops : [];
+      if (ops.length === 0) {
+        p.prev = 0;
+        p.current = 0;
+        return;
+      }
+      let total = 0;
+      for (let i = 0; i < ops.length; i++) {
+        total += Number(ops[i]) || 0;
+      }
+      const lastDelta = Number(ops[ops.length - 1]) || 0;
+      p.current = total;
+      p.prev = total - lastDelta;
+    }
+
     function renderState(state) {
       latestState = state || { players: {}, changeCount: 0 };
       const changeCount = Number(latestState.changeCount) || 0;
@@ -392,8 +425,8 @@
 
       if (!hasAnyCurrent) {
         totalCard.className = "total-card";
-        checkTitle.innerText = "合算チェック（現在の合計）";
-        hintEl.innerText = "全員の「現在」の合計が 0 なら一致です";
+        checkTitle.innerText = "チェック中";
+        hintEl.innerText = "全員の合計が 0 だといいね";
       } else if (sumCurrent === 0) {
         totalCard.className = "total-card ok";
         checkTitle.innerText = "✅ 波佐見OK（合算一致）";
@@ -433,13 +466,18 @@
           prev: 0,
           current: 0,
           settled: 0,
-          history: Array(Number(latestState.changeCount) || 0).fill(0)
+          history: Array(Number(latestState.changeCount) || 0).fill(0),
+          ops: []
         };
       }
-      const beforeVal = Number(latestState.players[selectedUserId].current) || 0;
-      latestState.players[selectedUserId].name = selectedUserName;
-      latestState.players[selectedUserId].prev = beforeVal;
-      latestState.players[selectedUserId].current = beforeVal + val;
+      const p = latestState.players[selectedUserId];
+      if (!Array.isArray(p.ops)) {
+        const existingCur = Number(p.current) || 0;
+        p.ops = existingCur !== 0 ? [existingCur] : [];
+      }
+      p.name = selectedUserName;
+      p.ops.push(val);
+      recalcLocalPlayer(p);
       renderState(latestState);
 
       setSyncBusy(true);
@@ -461,25 +499,35 @@
       }
     }
 
-    async function resetSelectedCurrent() {
+    // 直前の加算ボタンを押す前の状態に1つ戻す
+    async function undoSelected() {
+      const p = latestState.players[selectedUserId];
+      if (!p) return;
+
+      if (!Array.isArray(p.ops)) {
+        const existingCur = Number(p.current) || 0;
+        p.ops = existingCur !== 0 ? [existingCur] : [];
+      }
+      if (p.ops.length === 0) return;
+
       syncVersion++;
       const myVer = syncVersion;
-      if (latestState.players[selectedUserId]) {
-        latestState.players[selectedUserId].prev = 0;
-        latestState.players[selectedUserId].current = 0;
-        renderState(latestState);
-      }
+      p.ops.pop();
+      recalcLocalPlayer(p);
+      renderState(latestState);
 
       setSyncBusy(true);
       try {
         const res = await callGasApi({
-          action: 'resetPlayerCurrent',
+          action: 'undoAdd',
           chatId: chatId,
           userId: selectedUserId
         });
-        if (res.ok && res.state && myVer === syncVersion) renderState(res.state);
+        if (res.ok && res.state && myVer === syncVersion) {
+          renderState(res.state);
+        }
       } catch (e) {
-        alert("リセットに失敗しました");
+        alert("1つ戻す処理に失敗しました");
       } finally {
         setSyncBusy(false);
       }
@@ -494,6 +542,7 @@
         const curVal = Number(p.current) || 0;
         p.history.push(curVal);
         p.settled = (Number(p.settled) || 0) + curVal;
+        p.ops = [];
         p.prev = 0;
         p.current = 0;
       }
