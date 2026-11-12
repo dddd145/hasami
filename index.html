@@ -14,12 +14,16 @@
     .badge { font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 10px; }
     .badge-round { background: rgba(255, 146, 43, 0.2); color: #ffa94d; border: 1px solid #ff922b; }
     .badge-room { background: rgba(77, 171, 247, 0.15); color: #74c0fc; border: 1px solid rgba(77, 171, 247, 0.4); }
+    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #06c755; display: inline-block; }
+    .sync-dot.busy { background: #ffa94d; }
     .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 5px 9px; font-size: 11px; cursor: pointer; }
+
+    .url-warn { background: #c92a2a; color: #fff; font-size: 11px; padding: 6px 10px; text-align: center; font-weight: bold; display: none; }
 
     .board { flex: 1; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; }
     
     /* 合算チェックカード */
-    .total-card { background: #1e2229; border-radius: 12px; padding: 9px 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; transition: all 0.2s; }
+    .total-card { background: #1e2229; border-radius: 12px; padding: 9px 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; transition: all 0.15s; }
     .total-card.ok { background: rgba(6, 199, 85, 0.12); border-color: #06c755; }
     .total-card.ng { background: rgba(255, 107, 107, 0.1); border-color: #fa5252; }
     .total-label { font-size: 12px; font-weight: bold; }
@@ -34,7 +38,7 @@
     .table-header { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; padding: 7px 8px; background: #23272f; font-size: 10px; color: #868e96; font-weight: bold; border-bottom: 1px solid #2c3038; }
     .table-header span:not(:first-child) { text-align: right; }
     .table-body { overflow-y: auto; flex: 1; }
-    .member-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; align-items: center; padding: 9px 8px; border-bottom: 1px solid #262a31; font-size: 12px; cursor: pointer; transition: background 0.15s; }
+    .member-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; align-items: center; padding: 9px 8px; border-bottom: 1px solid #262a31; font-size: 12px; cursor: pointer; }
     .member-row:last-child { border-bottom: none; }
     .member-row.selected { background: rgba(6, 199, 85, 0.15); border-left: 3px solid #06c755; }
     .member-name { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 3px; }
@@ -47,7 +51,7 @@
     .tool-btn { background: #2c3038; color: #e9ecef; border: none; border-radius: 6px; padding: 5px 8px; font-size: 11px; cursor: pointer; }
     .tool-btn-del { background: rgba(201, 42, 42, 0.25); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.5); }
 
-    /* コマンドバー（3ボタン） */
+    /* コマンドバー（変更 / 決算 / 全リセット のみ） */
     .cmd-bar { display: grid; grid-template-columns: 1fr 1.2fr 0.8fr; gap: 6px; padding: 6px 10px; background: #181b20; }
     .cmd-btn { border: none; border-radius: 7px; padding: 8px 4px; font-size: 12px; font-weight: bold; color: #fff; cursor: pointer; }
     .btn-change { background: #1971c2; }
@@ -74,27 +78,26 @@
     .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 10px; }
     .modal-body { font-size: 14px; line-height: 1.6; margin-bottom: 16px; color: #e9ecef; white-space: pre-wrap; }
     .modal-btn { width: 100%; padding: 11px; border: none; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; background: #06c755; color: #fff; }
-
-    .loading { position: fixed; top: 44px; right: 12px; background: rgba(0,0,0,0.85); color: #06c755; font-size: 11px; padding: 3px 9px; border-radius: 8px; display: none; z-index: 50; }
   </style>
 </head>
 <body>
 
+  <div id="urlWarn" class="url-warn">⚠️ GAS_API_URL が未設定です。index.html の URL を設定してください。</div>
+
   <div class="header">
     <div class="header-left">
+      <span id="syncDot" class="sync-dot"></span>
       <span id="roundBadge" class="badge badge-round">第1戦</span>
-      <span id="roomBadge" class="badge badge-room">同期確認中</span>
+      <span id="roomBadge" class="badge badge-room">接続中</span>
     </div>
-    <button class="btn-refresh" onclick="fetchState()">↻ 更新</button>
+    <button class="btn-refresh" onclick="manualRefresh()">↻ 今すぐ更新</button>
   </div>
-
-  <div id="loading" class="loading">通信中...</div>
 
   <div class="board">
     <div id="totalCard" class="total-card">
       <div>
         <div id="checkTitle" class="total-label">合算チェック（今回の増減合計）</div>
-        <div id="remainHint" class="total-sub">全員の勝ち負けを入力してください</div>
+        <div id="remainHint" class="total-sub">各自の勝ち負けを入力してください</div>
       </div>
       <div id="totalVal" class="total-val val-zero">0</div>
     </div>
@@ -108,7 +111,7 @@
         <span>通算</span>
       </div>
       <div class="table-body" id="memberList">
-        <div class="empty-msg">データを読み込んでいます...</div>
+        <div class="empty-msg">読み込み中...</div>
       </div>
       <div class="board-tools">
         <button class="tool-btn" onclick="addProxyMember()">＋ メンバー追加</button>
@@ -187,12 +190,18 @@
     let myUserName = "自分";
     let selectedUserId = "unknown_user";
     let selectedUserName = "自分";
-    let latestState = null;
+    let latestState = { players: {}, roundCount: 0 };
 
     let isMinus = false;
     let rawDigits = "";
+    let syncVersion = 0;
+    let pollTimer = null;
 
     window.onload = async function() {
+      if (!GAS_API_URL.startsWith('http')) {
+        document.getElementById('urlWarn').style.display = 'block';
+      }
+
       try {
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
@@ -220,12 +229,29 @@
         const isGroup = chatId.startsWith('C') || chatId.startsWith('R');
         document.getElementById('roomBadge').innerText = isGroup ? "グループ共有中" : "個人ルーム";
       } catch (e) {
-        document.getElementById('roomBadge').innerText = "接続エラー";
+        document.getElementById('roomBadge').innerText = "オフライン/設定確認";
       }
 
-      fetchState();
-      setInterval(fetchState, 4000);
+      renderState(latestState);
+      startFastPolling();
     };
+
+    function setSyncBusy(busy) {
+      const dot = document.getElementById('syncDot');
+      if (busy) dot.classList.add('busy');
+      else dot.classList.remove('busy');
+    }
+
+    // 通信完了後1.5秒おきに高速ループ同期（通信の重なりを防止）
+    async function startFastPolling() {
+      if (pollTimer) clearTimeout(pollTimer);
+      await fetchState();
+      pollTimer = setTimeout(startFastPolling, 1500);
+    }
+
+    function manualRefresh() {
+      startFastPolling();
+    }
 
     function updateTargetLabel() {
       const isMe = (selectedUserId === myUserId);
@@ -237,7 +263,7 @@
       selectedUserId = uid;
       selectedUserName = name;
       updateTargetLabel();
-      if (latestState) renderState(latestState);
+      renderState(latestState);
     }
 
     function selectSelf() {
@@ -258,10 +284,6 @@
         body: JSON.stringify(payload)
       });
       return await res.json();
-    }
-
-    function setLoading(flag) {
-      document.getElementById('loading').style.display = flag ? 'block' : 'none';
     }
 
     function updateInputDisplay() {
@@ -308,11 +330,11 @@
     }
 
     function renderState(state) {
-      latestState = state;
-      const round = (Number(state.roundCount) || 0) + 1;
+      latestState = state || { players: {}, roundCount: 0 };
+      const round = (Number(latestState.roundCount) || 0) + 1;
       document.getElementById('roundBadge').innerText = `第${round}戦`;
 
-      const players = state.players || {};
+      const players = latestState.players || {};
       const allIds = new Set([
         myUserId,
         selectedUserId,
@@ -354,7 +376,6 @@
 
       document.getElementById('memberList').innerHTML = html || '<div class="empty-msg">メンバーがいません</div>';
 
-      // 合算チェックカード更新
       const totalCard = document.getElementById('totalCard');
       const checkTitle = document.getElementById('checkTitle');
       const hintEl = document.getElementById('remainHint');
@@ -379,19 +400,38 @@
     }
 
     async function fetchState() {
+      const reqVer = syncVersion;
+      setSyncBusy(true);
       try {
         const res = await callGasApi({ action: 'getState', chatId: chatId });
-        if (res.ok && res.state) renderState(res.state);
-      } catch (e) {}
+        if (res.ok && res.state && reqVer === syncVersion) {
+          renderState(res.state);
+        }
+      } catch (e) {
+      } finally {
+        setSyncBusy(false);
+      }
     }
 
+    // 即時画面反映（0秒レスポンス）＋裏側でGASへ送信
     async function submitAdd() {
       const num = rawDigits === "" ? 0 : parseInt(rawDigits, 10);
       if (num === 0) return;
       const val = isMinus ? -num : num;
       clearInput();
-      setLoading(true);
 
+      // 1. 通信完了を待たずに画面の数字を即座に更新
+      syncVersion++;
+      const myVer = syncVersion;
+      if (!latestState.players[selectedUserId]) {
+        latestState.players[selectedUserId] = { name: selectedUserName, prev: 0, current: 0, settled: 0 };
+      }
+      latestState.players[selectedUserId].name = selectedUserName;
+      latestState.players[selectedUserId].current = (Number(latestState.players[selectedUserId].current) || 0) + val;
+      renderState(latestState);
+
+      // 2. 裏側でGASに保存し、他メンバーのデータと統合
+      setSyncBusy(true);
       try {
         const res = await callGasApi({
           action: 'addValue',
@@ -400,52 +440,70 @@
           userName: selectedUserName,
           value: val
         });
-        setLoading(false);
-        if (res.ok) renderState(res.state);
+        if (res.ok && res.state && myVer === syncVersion) {
+          renderState(res.state);
+        }
       } catch (e) {
-        setLoading(false);
         alert("通信エラーが発生しました");
+      } finally {
+        setSyncBusy(false);
       }
     }
 
     async function resetSelectedCurrent() {
-      setLoading(true);
+      syncVersion++;
+      const myVer = syncVersion;
+      if (latestState.players[selectedUserId]) {
+        latestState.players[selectedUserId].current = Number(latestState.players[selectedUserId].prev) || 0;
+        renderState(latestState);
+      }
+
+      setSyncBusy(true);
       try {
         const res = await callGasApi({
           action: 'resetPlayerCurrent',
           chatId: chatId,
           userId: selectedUserId
         });
-        if (res.ok) renderState(res.state);
+        if (res.ok && res.state && myVer === syncVersion) renderState(res.state);
       } catch (e) {
         alert("取消に失敗しました");
       } finally {
-        setLoading(false);
+        setSyncBusy(false);
       }
     }
 
     async function runChange() {
-      setLoading(true);
+      syncVersion++;
+      const myVer = syncVersion;
+      for (const uid in latestState.players) {
+        latestState.players[uid].prev = Number(latestState.players[uid].current) || 0;
+      }
+      latestState.roundCount = (Number(latestState.roundCount) || 0) + 1;
+      renderState(latestState);
+
+      setSyncBusy(true);
       try {
         const res = await callGasApi({ action: 'commitChange', chatId: chatId });
-        if (res.ok) {
+        if (res.ok && res.state && myVer === syncVersion) {
           renderState(res.state);
-          openModal('📦 変更完了', '現在の値を「変更前」に確定しました。\n次のゲームの入力を始められます。');
         }
       } catch (e) {
         alert("通信エラーが発生しました");
       } finally {
-        setLoading(false);
+        setSyncBusy(false);
       }
     }
 
     async function runSettle() {
       if (!confirm('現在の成績を公式LINEからトークに送信し、現在値をリセットしますか？（通算には記録されます）')) return;
-      setLoading(true);
+      syncVersion++;
+      const myVer = syncVersion;
+      setSyncBusy(true);
       try {
         const res = await callGasApi({ action: 'settle', chatId: chatId });
-        if (res.ok) {
-          renderState(res.state);
+        if (res.ok && res.state) {
+          if (myVer === syncVersion) renderState(res.state);
           if (res.pushOk) {
             openModal('💰 決算送信完了', '公式LINEからトークに決算結果を送信しました！');
           } else {
@@ -455,20 +513,25 @@
       } catch (e) {
         alert("通信エラーが発生しました");
       } finally {
-        setLoading(false);
+        setSyncBusy(false);
       }
     }
 
     async function runResetAll() {
       if (!confirm('通算も含めて全員のデータをすべて0にリセットしますか？')) return;
-      setLoading(true);
+      syncVersion++;
+      const myVer = syncVersion;
+      latestState = { players: {}, roundCount: 0 };
+      renderState(latestState);
+
+      setSyncBusy(true);
       try {
         const res = await callGasApi({ action: 'resetAll', chatId: chatId });
-        if (res.ok) renderState(res.state);
+        if (res.ok && res.state && myVer === syncVersion) renderState(res.state);
       } catch (e) {
         alert("リセットに失敗しました");
       } finally {
-        setLoading(false);
+        setSyncBusy(false);
       }
     }
 
