@@ -9,68 +9,71 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background: #121417; color: #f1f3f5; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
     
-    .header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #1c1f24; border-bottom: 1px solid #2c3038; }
+    /* ヘッダー */
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; background: #1c1f24; border-bottom: 1px solid #2c3038; flex-shrink: 0; }
     .header-left { display: flex; align-items: center; gap: 6px; }
     .badge { font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 10px; }
     .badge-round { background: rgba(255, 146, 43, 0.2); color: #ffa94d; border: 1px solid #ff922b; }
     .badge-room { background: rgba(77, 171, 247, 0.15); color: #74c0fc; border: 1px solid rgba(77, 171, 247, 0.4); }
     .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #06c755; display: inline-block; }
     .sync-dot.busy { background: #ffa94d; }
-    .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 5px 9px; font-size: 11px; cursor: pointer; }
+    .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 4px 9px; font-size: 11px; cursor: pointer; }
 
-    .board { flex: 1; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; }
+    /* 上部ボード（5人収まるコンパクト設計） */
+    .board { padding: 6px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
     
-    /* 合算チェックカード */
-    .total-card { background: #1e2229; border-radius: 12px; padding: 9px 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; transition: all 0.15s; }
+    /* 合算チェックカード（現在の値のみで判定） */
+    .total-card { background: #1e2229; border-radius: 10px; padding: 7px 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; transition: all 0.15s; }
     .total-card.ok { background: rgba(6, 199, 85, 0.12); border-color: #06c755; }
     .total-card.ng { background: rgba(255, 107, 107, 0.1); border-color: #fa5252; }
     .total-label { font-size: 12px; font-weight: bold; }
-    .total-sub { font-size: 11px; color: #adb5bd; margin-top: 2px; }
-    .total-val { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .total-sub { font-size: 10px; color: #adb5bd; margin-top: 1px; }
+    .total-val { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
     .val-plus { color: #4dabf7; }
     .val-minus { color: #ff6b6b; }
     .val-zero { color: #51cf66; }
 
-    /* テーブル一覧（4列 または 変更後は5列） */
-    .table-box { background: #1c1f24; border-radius: 12px; border: 1px solid #2c3038; overflow: hidden; flex: 1; display: flex; flex-direction: column; }
-    .table-header { display: grid; padding: 7px 8px; background: #23272f; font-size: 10px; color: #868e96; font-weight: bold; border-bottom: 1px solid #2c3038; }
+    /* テーブル一覧（最大5人表示＋超過時スクロール） */
+    .table-box { background: #1c1f24; border-radius: 10px; border: 1px solid #2c3038; overflow: hidden; display: flex; flex-direction: column; }
+    .table-header { display: grid; padding: 6px 8px; background: #23272f; font-size: 10px; color: #868e96; font-weight: bold; border-bottom: 1px solid #2c3038; }
     .cols-4 { grid-template-columns: 1.5fr 1fr 1fr 1fr; }
     .cols-5 { grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; }
     .table-header span:not(:first-child) { text-align: right; }
-    .table-body { overflow-y: auto; flex: 1; }
-    .member-row { display: grid; align-items: center; padding: 9px 8px; border-bottom: 1px solid #262a31; font-size: 12px; cursor: pointer; }
+    .table-body { overflow-y: auto; max-height: 180px; }
+    .member-row { display: grid; align-items: center; height: 36px; padding: 0 8px; border-bottom: 1px solid #262a31; font-size: 12px; cursor: pointer; }
     .member-row:last-child { border-bottom: none; }
     .member-row.selected { background: rgba(6, 199, 85, 0.15); border-left: 3px solid #06c755; }
     .member-name { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 3px; }
     .me-tag { font-size: 9px; background: #343a46; color: #ced4da; padding: 1px 4px; border-radius: 4px; flex-shrink: 0; }
     .col-num { text-align: right; font-weight: bold; font-variant-numeric: tabular-nums; }
     .col-sub { text-align: right; color: #adb5bd; font-size: 11px; font-variant-numeric: tabular-nums; }
-    .empty-msg { text-align: center; color: #6c757d; font-size: 12px; padding: 20px 10px; }
+    .empty-msg { text-align: center; color: #6c757d; font-size: 12px; padding: 14px 10px; }
 
-    .board-tools { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; background: #181b20; border-top: 1px solid #2c3038; }
-    .tool-btn { background: #2c3038; color: #e9ecef; border: none; border-radius: 6px; padding: 5px 8px; font-size: 11px; cursor: pointer; }
+    .board-tools { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background: #181b20; border-top: 1px solid #2c3038; }
+    .tool-btn { background: #2c3038; color: #e9ecef; border: none; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
     .tool-btn-del { background: rgba(201, 42, 42, 0.25); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.5); }
 
-    /* コマンドバー（変更 / 決算 の2ボタン） */
-    .cmd-bar { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; padding: 6px 10px; background: #181b20; }
-    .cmd-btn { border: none; border-radius: 8px; padding: 9px 6px; font-size: 13px; font-weight: bold; color: #fff; cursor: pointer; }
+    /* コマンドバー（変更 / 決算） */
+    .cmd-bar { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; padding: 5px 10px; background: #181b20; flex-shrink: 0; }
+    .cmd-btn { border: none; border-radius: 8px; padding: 8px 6px; font-size: 13px; font-weight: bold; color: #fff; cursor: pointer; }
     .cmd-btn:active { opacity: 0.8; }
     .btn-change { background: #1971c2; }
     .btn-settle { background: #e67700; }
 
-    /* 電卓エリア */
-    .calc-area { background: #1c1f24; padding: 8px 10px 12px; border-top: 1px solid #2c3038; }
-    .target-bar { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #06c755; margin-bottom: 5px; font-weight: bold; }
-    .input-box { display: flex; align-items: center; background: #121417; border: 1px solid #343a46; border-radius: 8px; padding: 4px 10px; margin-bottom: 6px; }
-    .sign-btn { background: #2c3038; color: #fff; border: none; border-radius: 6px; width: 38px; height: 30px; font-size: 16px; font-weight: bold; margin-right: 8px; cursor: pointer; }
+    /* 電卓エリア（残り高さいっぱいに自動拡張してタップしやすく） */
+    .calc-area { flex: 1; background: #1c1f24; padding: 8px 10px 14px; border-top: 1px solid #2c3038; display: flex; flex-direction: column; min-height: 0; }
+    .target-bar { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #06c755; margin-bottom: 5px; font-weight: bold; flex-shrink: 0; }
+    .input-box { display: flex; align-items: center; background: #121417; border: 1px solid #343a46; border-radius: 8px; padding: 5px 10px; margin-bottom: 7px; flex-shrink: 0; }
+    .sign-btn { background: #2c3038; color: #fff; border: none; border-radius: 6px; width: 42px; height: 34px; font-size: 18px; font-weight: bold; margin-right: 8px; cursor: pointer; }
     .sign-minus { background: #c92a2a; }
-    .input-display { flex: 1; text-align: right; font-size: 22px; font-weight: bold; color: #fff; }
+    .input-display { flex: 1; text-align: right; font-size: 24px; font-weight: bold; color: #fff; }
 
-    .keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-    .key { background: #2b303a; color: #fff; border: none; border-radius: 8px; height: 36px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    .keypad { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); gap: 6px; min-height: 0; }
+    .key { background: #2b303a; color: #fff; border: none; border-radius: 10px; height: 100%; min-height: 42px; font-size: 19px; font-weight: bold; cursor: pointer; }
     .key:active { background: #3d4452; }
-    .key-sub { background: #21252b; color: #adb5bd; font-size: 13px; }
-    .key-send { background: #06c755; color: #fff; grid-row: span 2; height: 77px; font-size: 15px; }
+    .key-sub { background: #21252b; color: #adb5bd; font-size: 14px; }
+    .key-send { background: #06c755; color: #fff; grid-row: span 2; height: 100%; font-size: 17px; }
+    .key-send:active { background: #05a847; }
 
     /* モーダル */
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
@@ -95,7 +98,7 @@
     <div id="totalCard" class="total-card">
       <div>
         <div id="checkTitle" class="total-label">合算チェック（現在の合計）</div>
-        <div id="remainHint" class="total-sub">全員の勝ち負けを加算してください</div>
+        <div id="remainHint" class="total-sub">全員の「現在」の合計が 0 なら一致です</div>
       </div>
       <div id="totalVal" class="total-val val-zero">0</div>
     </div>
@@ -325,7 +328,6 @@
 
       document.getElementById('roundBadge').innerText = `第${changeCount + 1}戦`;
 
-      // 「変更」ボタン押下後のみ「通算」列を表示
       const headerEl = document.getElementById('tableHeader');
       if (showTotalCol) {
         headerEl.className = 'table-header cols-5';
@@ -343,7 +345,7 @@
       ]);
 
       let sumCurrent = 0;
-      let hasAnyInput = false;
+      let hasAnyCurrent = false;
       let html = '';
 
       allIds.forEach(uid => {
@@ -354,11 +356,11 @@
         const cur = p ? (Number(p.current) || 0) : 0;
         const settled = p ? (Number(p.settled) || 0) : 0;
 
-        const diff = cur - prev;        // 今回（変更前と比べた増減）
-        const total = settled + cur;    // 通算（変更で確定したすべての通算＋現在）
+        const diff = cur - prev;
+        const total = settled + cur;
 
         sumCurrent += cur;
-        if (cur !== 0 || prev !== 0) hasAnyInput = true;
+        if (cur !== 0) hasAnyCurrent = true;
 
         const isSelected = (uid === selectedUserId) ? 'selected' : '';
         const meBadge = (uid === myUserId) ? '<span class="me-tag">自分</span>' : '';
@@ -379,7 +381,7 @@
 
       document.getElementById('memberList').innerHTML = html || '<div class="empty-msg">メンバーがいません</div>';
 
-      // 合算チェックカード更新（現在の合計が0かチェック）
+      // 合算チェックカード（「現在」の値の合計のみを見る）
       const totalCard = document.getElementById('totalCard');
       const checkTitle = document.getElementById('checkTitle');
       const hintEl = document.getElementById('remainHint');
@@ -388,18 +390,18 @@
       totalEl.innerText = formatSigned(sumCurrent);
       totalEl.className = "total-val " + (sumCurrent > 0 ? "val-plus" : (sumCurrent < 0 ? "val-minus" : "val-zero"));
 
-      if (!hasAnyInput) {
+      if (!hasAnyCurrent) {
         totalCard.className = "total-card";
         checkTitle.innerText = "合算チェック（現在の合計）";
-        hintEl.innerText = "各自の勝ち負けを加算してください";
+        hintEl.innerText = "全員の「現在」の合計が 0 なら一致です";
       } else if (sumCurrent === 0) {
         totalCard.className = "total-card ok";
         checkTitle.innerText = "✅ 波佐見OK（合算一致）";
-        hintEl.innerText = "全員の「現在」合計が 0 で一致しています";
+        hintEl.innerText = "全員の「現在」の合計が 0 で一致しています";
       } else {
         totalCard.className = "total-card ng";
         checkTitle.innerText = "⚠️ 合算ズレあり";
-        hintEl.innerText = `合計が0になりません（差額: ${formatSigned(-sumCurrent)}）`;
+        hintEl.innerText = `現在の合計が 0 ではありません（差額: ${formatSigned(-sumCurrent)}）`;
       }
     }
 
@@ -423,7 +425,6 @@
       const val = isMinus ? -num : num;
       clearInput();
 
-      // 即時反映
       syncVersion++;
       const myVer = syncVersion;
       if (!latestState.players[selectedUserId]) {
