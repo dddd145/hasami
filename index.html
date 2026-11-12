@@ -19,14 +19,19 @@
     .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 5px 9px; font-size: 11px; cursor: pointer; }
 
     .board { flex: 1; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }
-    .total-card { background: linear-gradient(135deg, #1e2229 0%, #252a34 100%); border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; }
-    .total-label { font-size: 11px; color: #adb5bd; }
-    .total-sub { font-size: 11px; color: #868e96; margin-top: 2px; }
-    .total-val { font-size: 26px; font-weight: 800; }
+    
+    /* 合算チェックカード */
+    .total-card { background: #1e2229; border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; transition: all 0.2s; }
+    .total-card.ok { background: rgba(6, 199, 85, 0.12); border-color: #06c755; }
+    .total-card.ng { background: rgba(255, 107, 107, 0.1); border-color: #fa5252; }
+    .total-label { font-size: 12px; font-weight: bold; }
+    .total-sub { font-size: 11px; color: #adb5bd; margin-top: 2px; }
+    .total-val { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
     .val-plus { color: #4dabf7; }
     .val-minus { color: #ff6b6b; }
     .val-zero { color: #51cf66; }
 
+    /* テーブル一覧 */
     .table-box { background: #1c1f24; border-radius: 12px; border: 1px solid #2c3038; overflow: hidden; flex: 1; display: flex; flex-direction: column; }
     .table-header { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; padding: 7px 10px; background: #23272f; font-size: 11px; color: #868e96; font-weight: bold; border-bottom: 1px solid #2c3038; }
     .table-header span:not(:first-child) { text-align: right; }
@@ -81,7 +86,7 @@
   <div class="header">
     <div class="header-left">
       <span id="statusBadge" class="badge badge-stop">読込中</span>
-      <span id="countBadge" class="badge badge-count">波佐見: 0回</span>
+      <span id="countBadge" class="badge badge-count">保存済: 0戦</span>
       <span id="roomBadge" class="badge badge-room">同期確認中</span>
     </div>
     <button class="btn-refresh" onclick="fetchState()">↻ 更新</button>
@@ -90,10 +95,10 @@
   <div id="loading" class="loading">通信中...</div>
 
   <div class="board">
-    <div class="total-card">
+    <div id="totalCard" class="total-card">
       <div>
-        <div class="total-label">現在の場合計（0で波佐見）</div>
-        <div id="remainHint" class="total-sub">全員の合計が0になると精算表示</div>
+        <div id="checkTitle" class="total-label">合算チェック（0なら一致）</div>
+        <div id="remainHint" class="total-sub">全員の勝ち負けを入力してください</div>
       </div>
       <div id="totalVal" class="total-val val-zero">0</div>
     </div>
@@ -158,7 +163,7 @@
       <div id="modalTitle" class="modal-title"></div>
       <div id="modalBody" class="modal-body"></div>
       <div class="modal-actions">
-        <button id="btnSendLine" class="modal-btn btn-line" onclick="sendToLineChat()">トークに貼る</button>
+        <button id="btnSendLine" class="modal-btn btn-line" onclick="pushSettleToLine()">公式LINEでトークに送る</button>
         <button class="modal-btn btn-close" onclick="closeModal()">閉じる</button>
       </div>
     </div>
@@ -190,10 +195,10 @@
     let selectedUserId = "unknown_user";
     let selectedUserName = "自分";
     let latestState = null;
+    let settledCombinedData = null;
 
     let isMinus = false;
     let rawDigits = "";
-    let lastShareText = "";
 
     window.onload = async function() {
       try {
@@ -309,18 +314,31 @@
       const statusBadge = document.getElementById('statusBadge');
       statusBadge.innerText = state.active ? "計算モード中" : "停止中";
       statusBadge.className = state.active ? "badge badge-active" : "badge badge-stop";
-      document.getElementById('countBadge').innerText = `波佐見: ${state.count || 0}回`;
+      document.getElementById('countBadge').innerText = `保存済: ${state.count || 0}戦`;
 
+      const totalCard = document.getElementById('totalCard');
+      const checkTitle = document.getElementById('checkTitle');
+      const hintEl = document.getElementById('remainHint');
       const totalEl = document.getElementById('totalVal');
+
       const t = Number(state.total || 0);
+      const inputCount = Object.keys(state.userValues || {}).length;
+
       totalEl.innerText = formatSigned(t);
       totalEl.className = "total-val " + (t > 0 ? "val-plus" : (t < 0 ? "val-minus" : "val-zero"));
 
-      const hintEl = document.getElementById('remainHint');
-      if (t === 0) {
-        hintEl.innerText = "現在ちょうど 0 です";
+      if (inputCount === 0) {
+        totalCard.className = "total-card";
+        checkTitle.innerText = "合算チェック（0なら一致）";
+        hintEl.innerText = "各自の勝ち負け（+ / -）を入力してください";
+      } else if (t === 0) {
+        totalCard.className = "total-card ok";
+        checkTitle.innerText = "✅ 波佐見OK（合算一致）";
+        hintEl.innerText = "全員の合計が0で一致しています";
       } else {
-        hintEl.innerText = `あと ${formatSigned(-t)} で波佐見（0）`;
+        totalCard.className = "total-card ng";
+        checkTitle.innerText = "⚠️ 合算ズレあり";
+        hintEl.innerText = `合計が0になりません（差額: ${formatSigned(-t)}）`;
       }
 
       const listEl = document.getElementById('memberList');
@@ -380,17 +398,7 @@
           value: val
         });
         setLoading(false);
-        if (res.ok) {
-          renderState(res.state);
-          if (res.event && res.event.type === 'hasami') {
-            let lines = [`🎉 波佐見（${res.event.count}回目）\n`];
-            for (const uid in res.event.details) {
-              const d = res.event.details[uid];
-              lines.push(`${d.name}: ${formatSigned(d.val)}`);
-            }
-            openModal(`🎉 波佐見（${res.event.count}回目）`, lines.join('\n'), true);
-          }
-        }
+        if (res.ok) renderState(res.state);
       } catch (e) {
         setLoading(false);
         alert("通信エラーが発生しました");
@@ -423,23 +431,24 @@
           const res = await callGasApi({ action: 'saveChange', chatId: chatId });
           if (res.ok) {
             renderState(res.state);
-            openModal('📦 変更（保存完了）', '現在の数字をキープしました。\n次のゲームを始められます。', false);
+            openModal('📦 変更（キープ完了）', '今回の数字をキープに保存しました。\n次のゲームの入力を始められます。', false);
           }
         } else if (type === 'settle') {
           const res = await callGasApi({ action: 'settle', chatId: chatId });
           if (res.ok) {
             renderState(res.state);
-            let lines = ['💰 【決算（総計）】'];
-            const keys = Object.keys(res.combined || {});
+            settledCombinedData = res.combined || {};
+            let lines = [];
+            const keys = Object.keys(settledCombinedData);
             if (keys.length === 0) {
               lines.push('（データなし）');
             } else {
               keys.forEach(uid => {
-                const item = res.combined[uid];
+                const item = settledCombinedData[uid];
                 lines.push(`${item.name}: ${formatSigned(item.val)}`);
               });
             }
-            openModal('💰 決算（総計）', lines.join('\n'), true);
+            openModal('💰 決算（総計）', lines.join('\n'), keys.length > 0);
           }
         } else if (type === 'kaere') {
           const res = await callGasApi({ action: 'kaere', chatId: chatId });
@@ -455,11 +464,10 @@
       }
     }
 
-    function openModal(title, bodyText, canShare) {
+    function openModal(title, bodyText, canPushSettle) {
       document.getElementById('modalTitle').innerText = title;
       document.getElementById('modalBody').innerText = bodyText;
-      lastShareText = bodyText;
-      document.getElementById('btnSendLine').style.display = canShare ? 'block' : 'none';
+      document.getElementById('btnSendLine').style.display = canPushSettle ? 'block' : 'none';
       document.getElementById('modalBg').style.display = 'flex';
     }
 
@@ -467,16 +475,28 @@
       document.getElementById('modalBg').style.display = 'none';
     }
 
-    async function sendToLineChat() {
-      if (!liff.isInClient()) {
-        alert("LINEアプリ内から開いた場合のみトークへ直接送信できます");
-        return;
-      }
+    async function pushSettleToLine() {
+      if (!settledCombinedData) return;
+      const btn = document.getElementById('btnSendLine');
+      btn.innerText = "送信中...";
+      btn.disabled = true;
+
       try {
-        await liff.sendMessages([{ type: 'text', text: lastShareText }]);
-        closeModal();
+        const res = await callGasApi({
+          action: 'pushSettle',
+          chatId: chatId,
+          combined: settledCombinedData
+        });
+        if (res.ok) {
+          closeModal();
+        } else {
+          alert(res.error || "送信に失敗しました");
+        }
       } catch (e) {
-        alert("送信に失敗しました。公式LINEを友だち追加しているか確認してください。");
+        alert("通信エラーが発生しました");
+      } finally {
+        btn.innerText = "公式LINEでトークに送る";
+        btn.disabled = false;
       }
     }
   </script>
