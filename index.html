@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>波佐見計算機</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background: #121417; color: #f1f3f5; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
+    
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #1c1f24; border-bottom: 1px solid #2c3038; }
+    .header-left { display: flex; align-items: center; gap: 8px; }
+    .badge { font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 12px; }
+    .badge-active { background: rgba(6, 199, 85, 0.2); color: #06c755; border: 1px solid #06c755; }
+    .badge-stop { background: rgba(134, 142, 150, 0.2); color: #adb5bd; border: 1px solid #495057; }
+    .badge-count { background: rgba(255, 146, 43, 0.2); color: #ffa94d; border: 1px solid #ff922b; }
+    .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+    .btn-refresh:active { transform: scale(0.95); }
+
+    .board { flex: 1; overflow-y: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .total-card { background: linear-gradient(135deg, #1e2229 0%, #252a34 100%); border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; }
+    .total-label { font-size: 12px; color: #adb5bd; }
+    .profile-box { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+    .profile-icon { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; display: none; }
+    .profile-name { font-size: 12px; color: #4dabf7; font-weight: bold; }
+    .total-val { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+    .val-plus { color: #4dabf7; }
+    .val-minus { color: #ff6b6b; }
+    .val-zero { color: #51cf66; }
+
+    .member-list { background: #1c1f24; border-radius: 12px; padding: 8px 12px; border: 1px solid #2c3038; }
+    .member-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #262a31; font-size: 14px; }
+    .member-row:last-child { border-bottom: none; }
+    .member-saved { font-size: 11px; color: #868e96; margin-left: 6px; }
+    .empty-msg { text-align: center; color: #6c757d; font-size: 12px; padding: 10px 0; }
+
+    .cmd-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px 14px; background: #181b20; }
+    .cmd-btn { border: none; border-radius: 8px; padding: 8px 2px; font-size: 11px; font-weight: bold; color: #fff; cursor: pointer; }
+    .cmd-btn:active { opacity: 0.7; }
+    .btn-start { background: #2b8a3e; }
+    .btn-change { background: #1971c2; }
+    .btn-settle { background: #e67700; }
+    .btn-kaere { background: #c92a2a; }
+
+    .calc-area { background: #1c1f24; padding: 10px 14px 16px; border-top: 1px solid #2c3038; }
+    .input-box { display: flex; align-items: center; background: #121417; border: 1px solid #343a46; border-radius: 10px; padding: 6px 12px; margin-bottom: 8px; }
+    .sign-btn { background: #2c3038; color: #fff; border: none; border-radius: 6px; width: 42px; height: 34px; font-size: 18px; font-weight: bold; margin-right: 10px; cursor: pointer; }
+    .sign-minus { background: #c92a2a; }
+    .input-display { flex: 1; text-align: right; font-size: 26px; font-weight: bold; color: #fff; letter-spacing: 1px; }
+
+    .keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .key { background: #2b303a; color: #fff; border: none; border-radius: 10px; height: 44px; font-size: 18px; font-weight: bold; cursor: pointer; }
+    .key:active { background: #3d4452; }
+    .key-sub { background: #21252b; color: #adb5bd; font-size: 14px; }
+    .key-send { background: #06c755; color: #fff; grid-row: span 2; height: 94px; font-size: 16px; }
+    .key-send:active { background: #05a847; }
+
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
+    .modal-card { background: #1e2229; border: 1px solid #495057; border-radius: 16px; width: 100%; max-width: 340px; padding: 20px; text-align: center; animation: pop 0.25s ease-out; }
+    @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
+    .modal-body { font-size: 15px; line-height: 1.6; margin-bottom: 18px; color: #e9ecef; white-space: pre-wrap; }
+    .modal-actions { display: flex; gap: 8px; }
+    .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; }
+    .btn-line { background: #06c755; color: #fff; }
+    .btn-close { background: #343a46; color: #fff; }
+
+    .loading { position: fixed; top: 52px; right: 14px; background: rgba(0,0,0,0.8); color: #06c755; font-size: 11px; padding: 4px 10px; border-radius: 10px; display: none; z-index: 50; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <span id="statusBadge" class="badge badge-stop">読込中</span>
+      <span id="countBadge" class="badge badge-count">波佐見: 0回</span>
+    </div>
+    <button class="btn-refresh" onclick="fetchState()">↻ 更新</button>
+  </div>
+
+  <div id="loading" class="loading">通信中...</div>
+
+  <div class="board">
+    <div class="total-card">
+      <div>
+        <div class="total-label">現在の合計（0で波佐見）</div>
+        <div class="profile-box">
+          <img id="userIcon" class="profile-icon" src="" alt="">
+          <span id="userLabel" class="profile-name">LINE情報取得中...</span>
+        </div>
+      </div>
+      <div id="totalVal" class="total-val val-zero">0</div>
+    </div>
+
+    <div class="member-list" id="memberList">
+      <div class="empty-msg">データを読み込んでいます...</div>
+    </div>
+  </div>
+
+  <div class="cmd-bar">
+    <button class="cmd-btn btn-start" onclick="runCmd('start')">波佐見さん</button>
+    <button class="cmd-btn btn-change" onclick="runCmd('change')">変更</button>
+    <button class="cmd-btn btn-settle" onclick="runCmd('settle')">決算</button>
+    <button class="cmd-btn btn-kaere" onclick="runCmd('kaere')">帰れ</button>
+  </div>
+
+  <div class="calc-area">
+    <div class="input-box">
+      <button id="signBtn" class="sign-btn" onclick="toggleSign()">＋</button>
+      <div id="inputDisplay" class="input-display">0</div>
+    </div>
+    <div class="keypad">
+      <button class="key" onclick="pressNum('7')">7</button>
+      <button class="key" onclick="pressNum('8')">8</button>
+      <button class="key" onclick="pressNum('9')">9</button>
+      <button class="key key-sub" onclick="clearInput()">C</button>
+
+      <button class="key" onclick="pressNum('4')">4</button>
+      <button class="key" onclick="pressNum('5')">5</button>
+      <button class="key" onclick="pressNum('6')">6</button>
+      <button class="key key-sub" onclick="backspace()">⌫</button>
+
+      <button class="key" onclick="pressNum('1')">1</button>
+      <button class="key" onclick="pressNum('2')">2</button>
+      <button class="key" onclick="pressNum('3')">3</button>
+      <button class="key key-send" onclick="submitVal()">送信</button>
+
+      <button class="key key-sub" onclick="toggleSign()">± (ま)</button>
+      <button class="key" onclick="pressNum('0')">0</button>
+      <button class="key" onclick="pressNum('00')">00</button>
+    </div>
+  </div>
+
+  <div id="modalBg" class="modal-bg">
+    <div class="modal-card">
+      <div id="modalTitle" class="modal-title"></div>
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-actions">
+        <button id="btnSendLine" class="modal-btn btn-line" onclick="sendToLineChat()">トークに貼る</button>
+        <button class="modal-btn btn-close" onclick="closeModal()">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ▼▼ ここを書き換えてください ▼▼
+    const LIFF_ID = "2012565939-nRmRToVG";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx2Bps0bOXSs6PFAFzMkn_UxA33AS0_wwmzPYatYgZO2pXNV54qWbORf4tnilMXz8Yv/exec";
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    let chatId = "default_room";
+    let userId = "unknown_user";
+    let userName = "名無し";
+    let isMinus = false;
+    let rawDigits = "";
+    let lastShareText = "";
+
+    window.onload = async function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramChatId = urlParams.get('chatId');
+
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+        const profile = await liff.getProfile();
+        userId = profile.userId;
+        userName = profile.displayName;
+        document.getElementById('userLabel').innerText = userName;
+        if (profile.pictureUrl) {
+          const iconEl = document.getElementById('userIcon');
+          iconEl.src = profile.pictureUrl;
+          iconEl.style.display = 'inline-block';
+        }
+
+        const ctx = liff.getContext();
+        chatId = (ctx && (ctx.groupId || ctx.roomId)) || paramChatId || (ctx && ctx.userId) || userId;
+      } catch (e) {
+        document.getElementById('userLabel').innerText = "LINE情報取得エラー";
+      }
+
+      fetchState();
+      setInterval(fetchState, 5000);
+    };
+
+    async function callGasApi(payload) {
+      const res = await fetch(GAS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    }
+
+    function setLoading(flag) {
+      document.getElementById('loading').style.display = flag ? 'block' : 'none';
+    }
+
+    function updateInputDisplay() {
+      const disp = document.getElementById('inputDisplay');
+      const signBtn = document.getElementById('signBtn');
+      const numStr = rawDigits === "" ? "0" : rawDigits;
+      disp.innerText = (isMinus && rawDigits !== "" ? "-" : "") + numStr;
+      signBtn.innerText = isMinus ? "−" : "＋";
+      signBtn.className = isMinus ? "sign-btn sign-minus" : "sign-btn";
+    }
+
+    function pressNum(d) {
+      if (rawDigits === "" && (d === "0" || d === "00")) return;
+      if (rawDigits.length >= 7) return;
+      rawDigits += d;
+      updateInputDisplay();
+    }
+
+    function toggleSign() {
+      isMinus = !isMinus;
+      updateInputDisplay();
+    }
+
+    function clearInput() {
+      rawDigits = "";
+      isMinus = false;
+      updateInputDisplay();
+    }
+
+    function backspace() {
+      rawDigits = rawDigits.slice(0, -1);
+      updateInputDisplay();
+    }
+
+    function renderState(state) {
+      const statusBadge = document.getElementById('statusBadge');
+      statusBadge.innerText = state.active ? "計算モード中" : "停止中";
+      statusBadge.className = state.active ? "badge badge-active" : "badge badge-stop";
+      document.getElementById('countBadge').innerText = `波佐見: ${state.count || 0}回`;
+
+      const totalEl = document.getElementById('totalVal');
+      const t = Number(state.total || 0);
+      totalEl.innerText = t > 0 ? `+${t}` : `${t}`;
+      totalEl.className = "total-val " + (t > 0 ? "val-plus" : (t < 0 ? "val-minus" : "val-zero"));
+
+      const listEl = document.getElementById('memberList');
+      const allIds = new Set([
+        ...Object.keys(state.userValues || {}),
+        ...Object.keys(state.savedUserValues || {})
+      ]);
+
+      if (allIds.size === 0) {
+        listEl.innerHTML = '<div class="empty-msg">現在入力はありません</div>';
+        return;
+      }
+
+      let html = '';
+      allIds.forEach(uid => {
+        const cur = state.userValues[uid];
+        const sav = state.savedUserValues[uid];
+        const name = (cur && cur.name) || (sav && sav.name) || '名無し';
+        const curVal = cur ? Number(cur.val) : 0;
+        const savVal = sav ? Number(sav.val) : 0;
+        const curStr = curVal > 0 ? `+${curVal}` : `${curVal}`;
+        const savStr = savVal !== 0 ? `(キープ: ${savVal > 0 ? '+' + savVal : savVal})` : '';
+        const colorClass = curVal > 0 ? 'val-plus' : (curVal < 0 ? 'val-minus' : '');
+
+        html += `
+          <div class="member-row">
+            <div><span>${name}</span><span class="member-saved">${savStr}</span></div>
+            <div class="${colorClass}" style="font-weight:bold;">${curStr}</div>
+          </div>`;
+      });
+      listEl.innerHTML = html;
+    }
+
+    async function fetchState() {
+      try {
+        const res = await callGasApi({ action: 'getState', chatId: chatId });
+        if (res.ok && res.state) renderState(res.state);
+      } catch (e) {}
+    }
+
+    async function submitVal() {
+      const num = rawDigits === "" ? 0 : parseInt(rawDigits, 10);
+      const val = isMinus ? -num : num;
+      clearInput();
+      setLoading(true);
+
+      try {
+        const res = await callGasApi({
+          action: 'submitValue',
+          chatId: chatId,
+          userId: userId,
+          userName: userName,
+          value: val
+        });
+        setLoading(false);
+        if (res.ok) {
+          renderState(res.state);
+          if (res.event && res.event.type === 'hasami') {
+            let lines = [`🎉 波佐見（${res.event.count}回目）\n`];
+            for (const uid in res.event.details) {
+              const d = res.event.details[uid];
+              const v = d.val > 0 ? `+${d.val}` : `${d.val}`;
+              lines.push(`${d.name}: ${v}`);
+            }
+            openModal(`🎉 波佐見（${res.event.count}回目）`, lines.join('\n'), true);
+          }
+        }
+      } catch (e) {
+        setLoading(false);
+        alert("通信エラーが発生しました");
+      }
+    }
+
+    async function runCmd(type) {
+      setLoading(true);
+      try {
+        if (type === 'start') {
+          const res = await callGasApi({ action: 'startGame', chatId: chatId });
+          if (res.ok) renderState(res.state);
+        } else if (type === 'change') {
+          const res = await callGasApi({ action: 'saveChange', chatId: chatId });
+          if (res.ok) {
+            renderState(res.state);
+            openModal('📦 変更（保存完了）', '現在の数字をキープしました。\n次のゲームを始められます。', false);
+          }
+        } else if (type === 'settle') {
+          const res = await callGasApi({ action: 'settle', chatId: chatId });
+          if (res.ok) {
+            renderState(res.state);
+            let lines = ['💰 【決算（総計）】'];
+            const keys = Object.keys(res.combined || {});
+            if (keys.length === 0) {
+              lines.push('（データなし）');
+            } else {
+              keys.forEach(uid => {
+                const item = res.combined[uid];
+                const v = item.val > 0 ? `+${item.val}` : `${item.val}`;
+                lines.push(`${item.name}: ${v}`);
+              });
+            }
+            openModal('💰 決算（総計）', lines.join('\n'), true);
+          }
+        } else if (type === 'kaere') {
+          const res = await callGasApi({ action: 'kaere', chatId: chatId });
+          if (res.ok) {
+            renderState(res.state);
+            openModal('停止完了', res.message, false);
+          }
+        }
+      } catch (e) {
+        alert("通信エラーが発生しました");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function openModal(title, bodyText, canShare) {
+      document.getElementById('modalTitle').innerText = title;
+      document.getElementById('modalBody').innerText = bodyText;
+      lastShareText = bodyText;
+      document.getElementById('btnSendLine').style.display = canShare ? 'block' : 'none';
+      document.getElementById('modalBg').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modalBg').style.display = 'none';
+    }
+
+    async function sendToLineChat() {
+      if (!liff.isInClient()) {
+        alert("LINEアプリ内から開いた場合のみトークへ直接送信できます");
+        return;
+      }
+      try {
+        await liff.sendMessages([{ type: 'text', text: lastShareText }]);
+        closeModal();
+      } catch (e) {
+        alert("送信に失敗しました。公式LINEを友だち追加しているか確認してください。");
+      }
+    }
+  </script>
+</body>
+</html>
