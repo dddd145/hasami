@@ -3,70 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>波佐見計算機</title>
+  <title>波佐見集計ボード</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background: #121417; color: #f1f3f5; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
     
-    .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #1c1f24; border-bottom: 1px solid #2c3038; }
-    .header-left { display: flex; align-items: center; gap: 8px; }
-    .badge { font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 12px; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #1c1f24; border-bottom: 1px solid #2c3038; }
+    .header-left { display: flex; align-items: center; gap: 6px; }
+    .badge { font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 10px; }
     .badge-active { background: rgba(6, 199, 85, 0.2); color: #06c755; border: 1px solid #06c755; }
     .badge-stop { background: rgba(134, 142, 150, 0.2); color: #adb5bd; border: 1px solid #495057; }
     .badge-count { background: rgba(255, 146, 43, 0.2); color: #ffa94d; border: 1px solid #ff922b; }
-    .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
-    .btn-refresh:active { transform: scale(0.95); }
+    .badge-room { background: rgba(77, 171, 247, 0.15); color: #74c0fc; border: 1px solid rgba(77, 171, 247, 0.4); }
+    .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 5px 9px; font-size: 11px; cursor: pointer; }
 
-    .board { flex: 1; overflow-y: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
-    .total-card { background: linear-gradient(135deg, #1e2229 0%, #252a34 100%); border-radius: 14px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; }
-    .total-label { font-size: 12px; color: #adb5bd; }
-    .profile-box { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
-    .profile-icon { width: 20px; height: 20px; border-radius: 50%; object-fit: cover; display: none; }
-    .profile-name { font-size: 12px; color: #4dabf7; font-weight: bold; }
-    .total-val { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+    .board { flex: 1; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }
+    .total-card { background: linear-gradient(135deg, #1e2229 0%, #252a34 100%); border-radius: 12px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; }
+    .total-label { font-size: 11px; color: #adb5bd; }
+    .total-sub { font-size: 11px; color: #868e96; margin-top: 2px; }
+    .total-val { font-size: 26px; font-weight: 800; }
     .val-plus { color: #4dabf7; }
     .val-minus { color: #ff6b6b; }
     .val-zero { color: #51cf66; }
 
-    .member-list { background: #1c1f24; border-radius: 12px; padding: 8px 12px; border: 1px solid #2c3038; }
-    .member-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #262a31; font-size: 14px; }
+    .table-box { background: #1c1f24; border-radius: 12px; border: 1px solid #2c3038; overflow: hidden; flex: 1; display: flex; flex-direction: column; }
+    .table-header { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; padding: 7px 10px; background: #23272f; font-size: 11px; color: #868e96; font-weight: bold; border-bottom: 1px solid #2c3038; }
+    .table-header span:not(:first-child) { text-align: right; }
+    .table-body { overflow-y: auto; flex: 1; }
+    .member-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; align-items: center; padding: 9px 10px; border-bottom: 1px solid #262a31; font-size: 13px; cursor: pointer; transition: background 0.15s; }
     .member-row:last-child { border-bottom: none; }
-    .member-saved { font-size: 11px; color: #868e96; margin-left: 6px; }
-    .empty-msg { text-align: center; color: #6c757d; font-size: 12px; padding: 10px 0; }
+    .member-row.selected { background: rgba(6, 199, 85, 0.15); border-left: 3px solid #06c755; }
+    .member-name { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+    .me-tag { font-size: 9px; background: #343a46; color: #ced4da; padding: 1px 4px; border-radius: 4px; }
+    .col-num { text-align: right; font-weight: bold; font-variant-numeric: tabular-nums; }
+    .col-sub { text-align: right; color: #adb5bd; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .empty-msg { text-align: center; color: #6c757d; font-size: 12px; padding: 20px 10px; }
 
-    .cmd-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 6px 14px; background: #181b20; }
-    .cmd-btn { border: none; border-radius: 8px; padding: 8px 2px; font-size: 11px; font-weight: bold; color: #fff; cursor: pointer; }
-    .cmd-btn:active { opacity: 0.7; }
+    .board-tools { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: #181b20; border-top: 1px solid #2c3038; }
+    .tool-btn { background: #2c3038; color: #e9ecef; border: none; border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer; }
+    .tool-btn-del { background: rgba(201, 42, 42, 0.25); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.5); }
+
+    .cmd-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; padding: 5px 12px; background: #181b20; }
+    .cmd-btn { border: none; border-radius: 7px; padding: 7px 2px; font-size: 11px; font-weight: bold; color: #fff; cursor: pointer; }
     .btn-start { background: #2b8a3e; }
     .btn-change { background: #1971c2; }
     .btn-settle { background: #e67700; }
     .btn-kaere { background: #c92a2a; }
 
-    .calc-area { background: #1c1f24; padding: 10px 14px 16px; border-top: 1px solid #2c3038; }
-    .input-box { display: flex; align-items: center; background: #121417; border: 1px solid #343a46; border-radius: 10px; padding: 6px 12px; margin-bottom: 8px; }
-    .sign-btn { background: #2c3038; color: #fff; border: none; border-radius: 6px; width: 42px; height: 34px; font-size: 18px; font-weight: bold; margin-right: 10px; cursor: pointer; }
+    .calc-area { background: #1c1f24; padding: 8px 12px 12px; border-top: 1px solid #2c3038; }
+    .target-bar { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #06c755; margin-bottom: 5px; font-weight: bold; }
+    .input-box { display: flex; align-items: center; background: #121417; border: 1px solid #343a46; border-radius: 8px; padding: 4px 10px; margin-bottom: 6px; }
+    .sign-btn { background: #2c3038; color: #fff; border: none; border-radius: 6px; width: 38px; height: 30px; font-size: 16px; font-weight: bold; margin-right: 8px; cursor: pointer; }
     .sign-minus { background: #c92a2a; }
-    .input-display { flex: 1; text-align: right; font-size: 26px; font-weight: bold; color: #fff; letter-spacing: 1px; }
+    .input-display { flex: 1; text-align: right; font-size: 22px; font-weight: bold; color: #fff; }
 
-    .keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .key { background: #2b303a; color: #fff; border: none; border-radius: 10px; height: 44px; font-size: 18px; font-weight: bold; cursor: pointer; }
+    .keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+    .key { background: #2b303a; color: #fff; border: none; border-radius: 8px; height: 36px; font-size: 16px; font-weight: bold; cursor: pointer; }
     .key:active { background: #3d4452; }
-    .key-sub { background: #21252b; color: #adb5bd; font-size: 14px; }
-    .key-send { background: #06c755; color: #fff; grid-row: span 2; height: 94px; font-size: 16px; }
-    .key-send:active { background: #05a847; }
+    .key-sub { background: #21252b; color: #adb5bd; font-size: 13px; }
+    .key-send { background: #06c755; color: #fff; grid-row: span 2; height: 77px; font-size: 15px; }
 
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
-    .modal-card { background: #1e2229; border: 1px solid #495057; border-radius: 16px; width: 100%; max-width: 340px; padding: 20px; text-align: center; animation: pop 0.25s ease-out; }
-    @keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .modal-title { font-size: 20px; font-weight: 800; margin-bottom: 10px; }
-    .modal-body { font-size: 15px; line-height: 1.6; margin-bottom: 18px; color: #e9ecef; white-space: pre-wrap; }
+    .modal-card { background: #1e2229; border: 1px solid #495057; border-radius: 16px; width: 100%; max-width: 340px; padding: 20px; text-align: center; }
+    .modal-title { font-size: 19px; font-weight: 800; margin-bottom: 10px; }
+    .modal-body { font-size: 14px; line-height: 1.6; margin-bottom: 16px; color: #e9ecef; white-space: pre-wrap; }
     .modal-actions { display: flex; gap: 8px; }
-    .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; }
+    .modal-btn { flex: 1; padding: 11px; border: none; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; }
     .btn-line { background: #06c755; color: #fff; }
     .btn-close { background: #343a46; color: #fff; }
 
-    .loading { position: fixed; top: 52px; right: 14px; background: rgba(0,0,0,0.8); color: #06c755; font-size: 11px; padding: 4px 10px; border-radius: 10px; display: none; z-index: 50; }
+    .loading { position: fixed; top: 44px; right: 12px; background: rgba(0,0,0,0.85); color: #06c755; font-size: 11px; padding: 3px 9px; border-radius: 8px; display: none; z-index: 50; }
   </style>
 </head>
 <body>
@@ -75,6 +82,7 @@
     <div class="header-left">
       <span id="statusBadge" class="badge badge-stop">読込中</span>
       <span id="countBadge" class="badge badge-count">波佐見: 0回</span>
+      <span id="roomBadge" class="badge badge-room">同期確認中</span>
     </div>
     <button class="btn-refresh" onclick="fetchState()">↻ 更新</button>
   </div>
@@ -84,17 +92,26 @@
   <div class="board">
     <div class="total-card">
       <div>
-        <div class="total-label">現在の合計（0で波佐見）</div>
-        <div class="profile-box">
-          <img id="userIcon" class="profile-icon" src="" alt="">
-          <span id="userLabel" class="profile-name">LINE情報取得中...</span>
-        </div>
+        <div class="total-label">現在の場合計（0で波佐見）</div>
+        <div id="remainHint" class="total-sub">全員の合計が0になると精算表示</div>
       </div>
       <div id="totalVal" class="total-val val-zero">0</div>
     </div>
 
-    <div class="member-list" id="memberList">
-      <div class="empty-msg">データを読み込んでいます...</div>
+    <div class="table-box">
+      <div class="table-header">
+        <span>プレイヤー (タップで選択)</span>
+        <span>今回</span>
+        <span>キープ</span>
+        <span>通算</span>
+      </div>
+      <div class="table-body" id="memberList">
+        <div class="empty-msg">データを読み込んでいます...</div>
+      </div>
+      <div class="board-tools">
+        <button class="tool-btn" onclick="addProxyMember()">＋ メンバー追加(代理)</button>
+        <button class="tool-btn tool-btn-del" onclick="removeSelectedUser()">選択中の今回値を消す</button>
+      </div>
     </div>
   </div>
 
@@ -106,6 +123,10 @@
   </div>
 
   <div class="calc-area">
+    <div class="target-bar">
+      <span id="targetLabel">入力対象: 自分</span>
+      <span onclick="selectSelf()" style="text-decoration:underline; cursor:pointer; color:#adb5bd;">自分に戻す</span>
+    </div>
     <div class="input-box">
       <button id="signBtn" class="sign-btn" onclick="toggleSign()">＋</button>
       <div id="inputDisplay" class="input-display">0</div>
@@ -144,22 +165,37 @@
   </div>
 
   <script>
-    // ▼▼ ここを書き換えてください ▼▼
     const LIFF_ID = "2012565939-nRmRToVG";
+    // ▼▼ ここだけGASのウェブアプリURLに書き換えてください ▼▼
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx2Bps0bOXSs6PFAFzMkn_UxA33AS0_wwmzPYatYgZO2pXNV54qWbORf4tnilMXz8Yv/exec";
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    let chatId = "default_room";
-    let userId = "unknown_user";
-    let userName = "名無し";
+    function extractUrlChatId() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('chatId')) return params.get('chatId');
+      const liffState = params.get('liff.state');
+      if (liffState) {
+        const decoded = decodeURIComponent(liffState);
+        const stateParams = new URLSearchParams(decoded.startsWith('?') ? decoded : '?' + decoded);
+        if (stateParams.get('chatId')) return stateParams.get('chatId');
+      }
+      return null;
+    }
+
+    const initialUrlChatId = extractUrlChatId();
+
+    let chatId = initialUrlChatId || "default_room";
+    let myUserId = "unknown_user";
+    let myUserName = "自分";
+    let selectedUserId = "unknown_user";
+    let selectedUserName = "自分";
+    let latestState = null;
+
     let isMinus = false;
     let rawDigits = "";
     let lastShareText = "";
 
     window.onload = async function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const paramChatId = urlParams.get('chatId');
-
       try {
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
@@ -167,24 +203,56 @@
           return;
         }
         const profile = await liff.getProfile();
-        userId = profile.userId;
-        userName = profile.displayName;
-        document.getElementById('userLabel').innerText = userName;
-        if (profile.pictureUrl) {
-          const iconEl = document.getElementById('userIcon');
-          iconEl.src = profile.pictureUrl;
-          iconEl.style.display = 'inline-block';
-        }
+        myUserId = profile.userId;
+        myUserName = profile.displayName;
+        selectedUserId = myUserId;
+        selectedUserName = myUserName;
+        updateTargetLabel();
 
         const ctx = liff.getContext();
-        chatId = (ctx && (ctx.groupId || ctx.roomId)) || paramChatId || (ctx && ctx.userId) || userId;
+        if (initialUrlChatId) {
+          chatId = initialUrlChatId;
+        } else if (ctx && (ctx.groupId || ctx.roomId)) {
+          chatId = ctx.groupId || ctx.roomId;
+        } else if (ctx && ctx.userId) {
+          chatId = ctx.userId;
+        } else {
+          chatId = myUserId;
+        }
+
+        const isGroup = chatId.startsWith('C') || chatId.startsWith('R');
+        document.getElementById('roomBadge').innerText = isGroup ? "グループ共有中" : "個人ルーム";
       } catch (e) {
-        document.getElementById('userLabel').innerText = "LINE情報取得エラー";
+        document.getElementById('roomBadge').innerText = "接続エラー";
       }
 
       fetchState();
-      setInterval(fetchState, 5000);
+      setInterval(fetchState, 4000);
     };
+
+    function updateTargetLabel() {
+      const isMe = (selectedUserId === myUserId);
+      document.getElementById('targetLabel').innerText =
+        `入力対象: ${selectedUserName}${isMe ? '（自分）' : '（代理入力）'}`;
+    }
+
+    function selectMember(uid, name) {
+      selectedUserId = uid;
+      selectedUserName = name;
+      updateTargetLabel();
+      if (latestState) renderState(latestState);
+    }
+
+    function selectSelf() {
+      selectMember(myUserId, myUserName);
+    }
+
+    function addProxyMember() {
+      const name = prompt("追加するメンバーの名前を入力してください");
+      if (!name || !name.trim()) return;
+      const proxyId = "proxy_" + name.trim();
+      selectMember(proxyId, name.trim());
+    }
 
     async function callGasApi(payload) {
       const res = await fetch(GAS_API_URL, {
@@ -231,7 +299,13 @@
       updateInputDisplay();
     }
 
+    function formatSigned(num) {
+      if (num > 0) return `+${num}`;
+      return `${num}`;
+    }
+
     function renderState(state) {
+      latestState = state;
       const statusBadge = document.getElementById('statusBadge');
       statusBadge.innerText = state.active ? "計算モード中" : "停止中";
       statusBadge.className = state.active ? "badge badge-active" : "badge badge-stop";
@@ -239,38 +313,49 @@
 
       const totalEl = document.getElementById('totalVal');
       const t = Number(state.total || 0);
-      totalEl.innerText = t > 0 ? `+${t}` : `${t}`;
+      totalEl.innerText = formatSigned(t);
       totalEl.className = "total-val " + (t > 0 ? "val-plus" : (t < 0 ? "val-minus" : "val-zero"));
+
+      const hintEl = document.getElementById('remainHint');
+      if (t === 0) {
+        hintEl.innerText = "現在ちょうど 0 です";
+      } else {
+        hintEl.innerText = `あと ${formatSigned(-t)} で波佐見（0）`;
+      }
 
       const listEl = document.getElementById('memberList');
       const allIds = new Set([
+        myUserId,
+        selectedUserId,
         ...Object.keys(state.userValues || {}),
         ...Object.keys(state.savedUserValues || {})
       ]);
 
-      if (allIds.size === 0) {
-        listEl.innerHTML = '<div class="empty-msg">現在入力はありません</div>';
-        return;
-      }
-
       let html = '';
       allIds.forEach(uid => {
-        const cur = state.userValues[uid];
-        const sav = state.savedUserValues[uid];
-        const name = (cur && cur.name) || (sav && sav.name) || '名無し';
+        if (!uid || uid === 'unknown_user') return;
+        const cur = state.userValues ? state.userValues[uid] : null;
+        const sav = state.savedUserValues ? state.savedUserValues[uid] : null;
+        const name = (uid === myUserId) ? myUserName : ((cur && cur.name) || (sav && sav.name) || (uid === selectedUserId ? selectedUserName : '名無し'));
         const curVal = cur ? Number(cur.val) : 0;
         const savVal = sav ? Number(sav.val) : 0;
-        const curStr = curVal > 0 ? `+${curVal}` : `${curVal}`;
-        const savStr = savVal !== 0 ? `(キープ: ${savVal > 0 ? '+' + savVal : savVal})` : '';
-        const colorClass = curVal > 0 ? 'val-plus' : (curVal < 0 ? 'val-minus' : '');
+        const sumVal = curVal + savVal;
+
+        const curClass = curVal > 0 ? 'val-plus' : (curVal < 0 ? 'val-minus' : '');
+        const sumClass = sumVal > 0 ? 'val-plus' : (sumVal < 0 ? 'val-minus' : '');
+        const isSelected = (uid === selectedUserId) ? 'selected' : '';
+        const meBadge = (uid === myUserId) ? '<span class="me-tag">自分</span>' : '';
 
         html += `
-          <div class="member-row">
-            <div><span>${name}</span><span class="member-saved">${savStr}</span></div>
-            <div class="${colorClass}" style="font-weight:bold;">${curStr}</div>
+          <div class="member-row ${isSelected}" onclick="selectMember('${uid}', '${name.replace(/'/g, "\\'")}')">
+            <div class="member-name">${name}${meBadge}</div>
+            <div class="col-num ${curClass}">${cur ? formatSigned(curVal) : '-'}</div>
+            <div class="col-sub">${savVal !== 0 ? formatSigned(savVal) : '0'}</div>
+            <div class="col-num ${sumClass}">${formatSigned(sumVal)}</div>
           </div>`;
       });
-      listEl.innerHTML = html;
+
+      listEl.innerHTML = html || '<div class="empty-msg">メンバーがいません</div>';
     }
 
     async function fetchState() {
@@ -290,8 +375,8 @@
         const res = await callGasApi({
           action: 'submitValue',
           chatId: chatId,
-          userId: userId,
-          userName: userName,
+          userId: selectedUserId,
+          userName: selectedUserName,
           value: val
         });
         setLoading(false);
@@ -301,8 +386,7 @@
             let lines = [`🎉 波佐見（${res.event.count}回目）\n`];
             for (const uid in res.event.details) {
               const d = res.event.details[uid];
-              const v = d.val > 0 ? `+${d.val}` : `${d.val}`;
-              lines.push(`${d.name}: ${v}`);
+              lines.push(`${d.name}: ${formatSigned(d.val)}`);
             }
             openModal(`🎉 波佐見（${res.event.count}回目）`, lines.join('\n'), true);
           }
@@ -310,6 +394,22 @@
       } catch (e) {
         setLoading(false);
         alert("通信エラーが発生しました");
+      }
+    }
+
+    async function removeSelectedUser() {
+      setLoading(true);
+      try {
+        const res = await callGasApi({
+          action: 'removeUser',
+          chatId: chatId,
+          userId: selectedUserId
+        });
+        if (res.ok) renderState(res.state);
+      } catch (e) {
+        alert("削除に失敗しました");
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -336,8 +436,7 @@
             } else {
               keys.forEach(uid => {
                 const item = res.combined[uid];
-                const v = item.val > 0 ? `+${item.val}` : `${item.val}`;
-                lines.push(`${item.name}: ${v}`);
+                lines.push(`${item.name}: ${formatSigned(item.val)}`);
               });
             }
             openModal('💰 決算（総計）', lines.join('\n'), true);
