@@ -15,8 +15,10 @@
     .badge { font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 10px; }
     .badge-round { background: rgba(255, 146, 43, 0.2); color: #ffa94d; border: 1px solid #ff922b; }
     .badge-room { background: rgba(77, 171, 247, 0.15); color: #74c0fc; border: 1px solid rgba(77, 171, 247, 0.4); }
+    .badge-err { background: rgba(250, 82, 82, 0.2); color: #ff8787; border: 1px solid #fa5252; }
     .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #06c755; display: inline-block; }
     .sync-dot.busy { background: #ffa94d; }
+    .sync-dot.err { background: #fa5252; }
     .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 4px 9px; font-size: 11px; cursor: pointer; }
 
     /* 上部ボード */
@@ -89,7 +91,7 @@
     <div class="header-left">
       <span id="syncDot" class="sync-dot"></span>
       <span id="roundBadge" class="badge badge-round">第1戦</span>
-      <span id="roomBadge" class="badge badge-room">接続中</span>
+      <span id="roomBadge" class="badge badge-room">接続中...</span>
     </div>
     <button class="btn-refresh" onclick="manualRefresh()">↻ 更新</button>
   </div>
@@ -110,7 +112,7 @@
         <span>今回</span>
         <span>現在</span>
       </div>
-      <div class="table-body" id="memberList">
+      <div class="table-body" id="memberList" onclick="handleMemberClick(event)">
         <div class="empty-msg">読み込み中...</div>
       </div>
       <div class="board-tools">
@@ -193,6 +195,7 @@
     let rawDigits = "";
     let syncVersion = 0;
     let pollTimer = null;
+    let isJoining = false;
 
     window.onload = async function() {
       try {
@@ -218,32 +221,57 @@
         } else {
           chatId = myUserId;
         }
-
-        const isGroup = chatId.startsWith('C') || chatId.startsWith('R');
-        document.getElementById('roomBadge').innerText = isGroup ? "グループ共有中" : "個人ルーム";
       } catch (e) {
-        document.getElementById('roomBadge').innerText = "接続エラー";
+        setRoomStatus(false, "LIFF権限エラー");
       }
 
       renderState(latestState);
-      await registerSelfOnJoin();
+      await registerMemberToServer(myUserId, myUserName);
       startFastPolling();
     };
 
-    // 開いた瞬間に全員のリストへ自動追加
-    async function registerSelfOnJoin() {
-      if (!myUserId || myUserId === 'unknown_user') return;
+    function setRoomStatus(ok, text) {
+      const badge = document.getElementById('roomBadge');
+      const dot = document.getElementById('syncDot');
+      badge.innerText = text;
+      if (ok) {
+        badge.className = "badge badge-room";
+        dot.classList.remove('err');
+      } else {
+        badge.className = "badge badge-err";
+        dot.classList.add('err');
+      }
+    }
+
+    function updateConnectedStatus(playersObj) {
+      const count = Object.keys(playersObj || {}).length;
+      const isGroup = chatId.startsWith('C') || chatId.startsWith('R');
+      const label = isGroup ? `グループ共有中 (${count}人)` : `個人ルーム (${count}人)`;
+      setRoomStatus(true, label);
+    }
+
+    // サーバーへプレイヤーを登録（全員の画面へ共有）
+    async function registerMemberToServer(uid, name) {
+      if (!uid || uid === 'unknown_user' || isJoining) return;
+      isJoining = true;
       try {
         const res = await callGasApi({
           action: 'join',
           chatId: chatId,
-          userId: myUserId,
-          userName: myUserName
+          userId: uid,
+          userName: name
         });
-        if (res.ok && res.state) {
+        if (res && res.ok && res.state) {
           renderState(res.state);
+          updateConnectedStatus(res.state.players);
+        } else {
+          setRoomStatus(false, "⚠️ GAS新バージョン未反映");
         }
-      } catch (e) {}
+      } catch (e) {
+        setRoomStatus(false, "⚠️ GAS通信エラー");
+      } finally {
+        isJoining = false;
+      }
     }
 
     function setSyncBusy(busy) {
@@ -268,6 +296,14 @@
         `加算対象: ${selectedUserName}${isMe ? '（自分）' : '（代理）'}`;
     }
 
+    function handleMemberClick(event) {
+      const row = event.target.closest('.member-row');
+      if (!row) return;
+      const uid = row.getAttribute('data-uid');
+      const name = row.getAttribute('data-name');
+      if (uid) selectMember(uid, name || '名無し');
+    }
+
     function selectMember(uid, name) {
       selectedUserId = uid;
       selectedUserName = name;
@@ -279,11 +315,24 @@
       selectMember(myUserId, myUserName);
     }
 
-    function addProxyMember() {
+    async function addProxyMember() {
       const name = prompt("追加するメンバーの名前を入力してください");
       if (!name || !name.trim()) return;
-      const proxyId = "proxy_" + name.trim();
-      selectMember(proxyId, name.trim());
+      const trimmed = name.trim();
+      const proxyId = "proxy_" + trimmed;
+
+      if (!latestState.players[proxyId]) {
+        latestState.players[proxyId] = {
+          name: trimmed,
+          prev: 0,
+          current: 0,
+          settled: 0,
+          history: Array(Number(latestState.changeCount) || 0).fill(0),
+          ops: []
+        };
+      }
+      selectMember(proxyId, trimmed);
+      await registerMemberToServer(proxyId, trimmed);
     }
 
     async function callGasApi(payload) {
@@ -336,6 +385,14 @@
       if (num > 0) return 'val-plus';
       if (num < 0) return 'val-minus';
       return '';
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     }
 
     function recalcLocalPlayer(p) {
@@ -403,8 +460,8 @@
           : '';
 
         html += `
-          <div class="member-row ${colClass} ${isSelected}" onclick="selectMember('${uid}', '${name.replace(/'/g, "\\'")}')">
-            <div class="member-name">${name}${meBadge}</div>
+          <div class="member-row ${colClass} ${isSelected}" data-uid="${escapeHtml(uid)}" data-name="${escapeHtml(name)}">
+            <div class="member-name">${escapeHtml(name)}${meBadge}</div>
             <div class="col-sub">${formatSigned(prev)}</div>
             <div class="col-num ${colorClass(diff)}">${diff !== 0 ? formatSigned(diff) : '0'}</div>
             <div class="col-num ${colorClass(cur)}">${formatSigned(cur)}</div>
@@ -443,10 +500,17 @@
       setSyncBusy(true);
       try {
         const res = await callGasApi({ action: 'getState', chatId: chatId });
-        if (res.ok && res.state && reqVer === syncVersion) {
+        if (res && res.ok && res.state && reqVer === syncVersion) {
           renderState(res.state);
+          updateConnectedStatus(res.state.players);
+
+          // サーバーの名簿に自分が載っていなければ自動再登録（リセット後や通信復帰時用）
+          if (myUserId && myUserId !== 'unknown_user' && (!res.state.players || !res.state.players[myUserId])) {
+            registerMemberToServer(myUserId, myUserName);
+          }
         }
       } catch (e) {
+        setRoomStatus(false, "⚠️ GAS通信エラー");
       } finally {
         setSyncBusy(false);
       }
@@ -491,9 +555,10 @@
         });
         if (res.ok && res.state && myVer === syncVersion) {
           renderState(res.state);
+          updateConnectedStatus(res.state.players);
         }
       } catch (e) {
-        alert("通信エラーが発生しました");
+        setRoomStatus(false, "⚠️ GAS通信エラー");
       } finally {
         setSyncBusy(false);
       }
