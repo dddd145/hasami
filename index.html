@@ -10,9 +10,9 @@
     body { background: #121417; color: #f1f3f5; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
     
     /* ヘッダー */
-    .header { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; background: #1c1f24; border-bottom: 1px solid #2c3038; flex-shrink: 0; gap: 4px; }
-    .header-left { display: flex; align-items: center; gap: 5px; min-width: 0; }
-    .header-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 7px 8px; background: #1c1f24; border-bottom: 1px solid #2c3038; flex-shrink: 0; gap: 4px; }
+    .header-left { display: flex; align-items: center; gap: 4px; min-width: 0; }
+    .header-right { display: flex; align-items: center; gap: 3px; flex-shrink: 0; }
     .badge { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; white-space: nowrap; }
     .badge-round { background: rgba(255, 146, 43, 0.2); color: #ffa94d; border: 1px solid #ff922b; }
     .badge-room { background: rgba(77, 171, 247, 0.15); color: #74c0fc; border: 1px solid rgba(77, 171, 247, 0.4); overflow: hidden; text-overflow: ellipsis; }
@@ -20,7 +20,7 @@
     .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #06c755; display: inline-block; flex-shrink: 0; }
     .sync-dot.busy { background: #ffa94d; }
     .sync-dot.err { background: #fa5252; }
-    .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 4px 7px; font-size: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+    .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 4px 6px; font-size: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; }
     .btn-refresh:active { background: #3d4452; }
 
     /* 上部ボード */
@@ -49,12 +49,14 @@
     .member-row.selected { background: rgba(6, 199, 85, 0.15); border-left: 3px solid #06c755; }
     .member-name { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 3px; }
     .me-tag { font-size: 9px; background: #343a46; color: #ced4da; padding: 1px 4px; border-radius: 4px; flex-shrink: 0; }
+    .streak-tag { font-size: 11px; flex-shrink: 0; line-height: 1; }
     .col-num { text-align: right; font-weight: bold; font-variant-numeric: tabular-nums; }
     .col-sub { text-align: right; color: #adb5bd; font-size: 11px; font-variant-numeric: tabular-nums; }
     .empty-msg { text-align: center; color: #6c757d; font-size: 12px; padding: 14px 10px; }
 
-    .board-tools { display: flex; justify-content: space-between; align-items: center; padding: 5px 8px; background: #181b20; border-top: 1px solid #2c3038; }
-    .tool-btn { background: #2c3038; color: #e9ecef; border: none; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
+    .board-tools { display: flex; justify-content: space-between; align-items: center; gap: 4px; padding: 5px 8px; background: #181b20; border-top: 1px solid #2c3038; }
+    .tool-btn { background: #2c3038; color: #e9ecef; border: none; border-radius: 6px; padding: 4px 7px; font-size: 10.5px; font-weight: bold; cursor: pointer; white-space: nowrap; }
+    .tool-btn:active { background: #3d4452; }
     .tool-btn-del { background: rgba(201, 42, 42, 0.25); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.5); }
 
     /* コマンドバー（変更 / 決算） */
@@ -83,8 +85,8 @@
     .key-send:active { background: #05a847; }
 
     /* モーダル共通 */
-    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
-    .modal-card { background: #1e2229; border: 1px solid #495057; border-radius: 16px; width: 100%; max-width: 340px; padding: 18px; text-align: center; }
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; padding: 16px; }
+    .modal-card { background: #1e2229; border: 1px solid #495057; border-radius: 16px; width: 100%; max-width: 350px; padding: 16px; text-align: center; }
     .modal-title { font-size: 16px; font-weight: 800; margin-bottom: 10px; }
     .modal-body { font-size: 14px; line-height: 1.6; margin-bottom: 16px; color: #e9ecef; white-space: pre-wrap; }
     .modal-btn { width: 100%; padding: 11px; border: none; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; background: #06c755; color: #fff; }
@@ -100,6 +102,22 @@
     .award-item:last-child { border-bottom: none; }
     .award-name { font-size: 12px; font-weight: bold; color: #ffa94d; margin-bottom: 2px; }
     .award-desc { font-size: 11px; color: #ced4da; line-height: 1.4; }
+
+    /* 並び替え・削除モーダル用 */
+    .manage-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 4px; border-bottom: 1px solid #23272f; gap: 6px; }
+    .manage-row:last-child { border-bottom: none; }
+    .manage-name { font-size: 13px; font-weight: bold; color: #f1f3f5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+    .manage-btns { display: flex; gap: 4px; flex-shrink: 0; }
+    .m-btn { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 5px 9px; font-size: 12px; font-weight: bold; cursor: pointer; }
+    .m-btn:disabled { opacity: 0.3; cursor: default; }
+    .m-btn-del { background: rgba(201, 42, 42, 0.3); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.6); }
+
+    /* 戦績推移グラフモーダル用 */
+    .chart-wrap { background: #121417; border: 1px solid #2c3038; border-radius: 10px; padding: 8px; margin-bottom: 10px; }
+    #trendCanvas { width: 100%; height: 210px; display: block; }
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 8px 12px; justify-content: center; margin-bottom: 12px; font-size: 11px; }
+    .legend-item { display: flex; align-items: center; gap: 4px; font-weight: bold; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -111,9 +129,10 @@
       <span id="roomBadge" class="badge badge-room">接続中...</span>
     </div>
     <div class="header-right">
+      <button class="btn-refresh" onclick="openGraphModal()">📈 グラフ</button>
       <button class="btn-refresh" onclick="openAwardModal()">🏆 称号</button>
       <button class="btn-refresh" onclick="openLogModal()">📜 ログ</button>
-      <button class="btn-refresh" onclick="manualRefresh()">↻ 更新</button>
+      <button class="btn-refresh" onclick="manualRefresh()">↻</button>
     </div>
   </div>
 
@@ -137,8 +156,9 @@
         <div class="empty-msg">読み込み中...</div>
       </div>
       <div class="board-tools">
-        <button class="tool-btn" onclick="addProxyMember()">＋ メンバー追加</button>
-        <button class="tool-btn tool-btn-del" onclick="undoSelected()">↩ 選択中の1つ戻す</button>
+        <button class="tool-btn" onclick="addProxyMember()">＋ 追加</button>
+        <button class="tool-btn" onclick="openManageModal()">↕️ 席順・削除</button>
+        <button class="tool-btn tool-btn-del" onclick="undoSelected()">↩ 1つ戻す</button>
       </div>
     </div>
   </div>
@@ -195,6 +215,27 @@
       <div id="modalTitle" class="modal-title"></div>
       <div id="modalBody" class="modal-body"></div>
       <button class="modal-btn" onclick="closeModal()">OK</button>
+    </div>
+  </div>
+
+  <!-- メンバー並び替え・削除モーダル -->
+  <div id="manageModalBg" class="modal-bg" onclick="if(event.target===this) closeManageModal()">
+    <div class="modal-card">
+      <div class="modal-title">↕️ 席順の並び替え・メンバー削除</div>
+      <div id="manageListBody" class="log-list"></div>
+      <button class="modal-btn" onclick="closeManageModal()">完了</button>
+    </div>
+  </div>
+
+  <!-- 戦績推移グラフモーダル -->
+  <div id="graphModalBg" class="modal-bg" onclick="if(event.target===this) closeGraphModal()">
+    <div class="modal-card">
+      <div class="modal-title">📈 累計スコア推移グラフ</div>
+      <div class="chart-wrap">
+        <canvas id="trendCanvas"></canvas>
+      </div>
+      <div id="chartLegend" class="chart-legend"></div>
+      <button class="modal-btn" onclick="closeGraphModal()">閉じる</button>
     </div>
   </div>
 
@@ -266,6 +307,7 @@
   <script>
     const LIFF_ID = "2012565939-nRmRToVG";
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx2Bps0bOXSs6PFAFzMkn_UxA33AS0_wwmzPYatYgZO2pXNV54qWbORf4tnilMXz8Yv/exec";
+    const CHART_COLORS = ["#4dabf7", "#ff6b6b", "#51cf66", "#fcc419", "#cc5de8", "#ff922b", "#20c997", "#f06595"];
 
     function extractUrlChatId() {
       const params = new URLSearchParams(window.location.search);
@@ -286,7 +328,7 @@
     let myUserName = "自分";
     let selectedUserId = "unknown_user";
     let selectedUserName = "自分";
-    let latestState = { players: {}, changeCount: 0, logs: [] };
+    let latestState = { players: {}, order: [], changeCount: 0, logs: [] };
 
     let isMinus = false;
     let rawDigits = "";
@@ -436,6 +478,9 @@
           ops: []
         };
       }
+      if (!Array.isArray(latestState.order)) latestState.order = [];
+      if (!latestState.order.includes(proxyId)) latestState.order.push(proxyId);
+
       selectMember(proxyId, trimmed);
       await registerMemberToServer(proxyId, trimmed);
     }
@@ -461,9 +506,7 @@
       signBtn.className = isMinus ? "sign-btn sign-minus" : "sign-btn";
     }
 
-    // スマホのキーボード直接入力を処理
     function handleManualInput(el) {
-      // 全角数字・記号を半角に変換
       let normalized = el.value
         .replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
         .replace(/[－ー−]/g, '-')
@@ -472,18 +515,15 @@
       if (normalized.includes('+')) {
         isMinus = false;
       } else if (normalized.includes('-')) {
-        // もともとマイナス状態で末尾に新たに「-」を打った場合はプラスに戻す
         if (isMinus && !normalized.startsWith('-')) {
           isMinus = false;
         } else {
           isMinus = true;
         }
       } else {
-        // バックスペース等で「-」自体が消された場合はプラスに戻す
         isMinus = false;
       }
 
-      // 数字のみ抽出・先頭の0を除去・最大7桁に制限
       let digits = normalized.replace(/[^0-9]/g, '').replace(/^0+/, '');
       if (digits.length > 7) digits = digits.slice(0, 7);
       rawDigits = digits;
@@ -491,7 +531,6 @@
       updateInputDisplay();
     }
 
-    // キーボードの「確定 / Enter」でそのまま加算実行
     function handleInputKeydown(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -570,6 +609,334 @@
       p.prev = total - lastDelta;
     }
 
+    // 確定済みラウンドの連続勝敗から調子アイコンを返す
+    function getStreakIcon(p) {
+      if (!p || !Array.isArray(p.history) || p.history.length < 2) return '';
+      const h = p.history;
+      let plusCount = 0;
+      for (let i = h.length - 1; i >= 0; i--) {
+        if ((Number(h[i]) || 0) > 0) plusCount++;
+        else break;
+      }
+      if (plusCount >= 2) return '<span class="streak-tag" title="連続プラス">🔥</span>';
+
+      let minusCount = 0;
+      for (let i = h.length - 1; i >= 0; i--) {
+        if ((Number(h[i]) || 0) < 0) minusCount++;
+        else break;
+      }
+      if (minusCount >= 2) return '<span class="streak-tag" title="連続マイナス">🥶</span>';
+      return '';
+    }
+
+    // 並び順を反映したプレイヤーIDリストを取得
+    function getOrderedIds(includeLocalSelected) {
+      const players = latestState.players || {};
+      const order = Array.isArray(latestState.order) ? latestState.order : [];
+      const result = [];
+
+      order.forEach(uid => {
+        if (uid && uid !== 'unknown_user' && players[uid] && !result.includes(uid)) {
+          result.push(uid);
+        }
+      });
+      Object.keys(players).forEach(uid => {
+        if (uid && uid !== 'unknown_user' && !result.includes(uid)) {
+          result.push(uid);
+        }
+      });
+      if (includeLocalSelected) {
+        if (myUserId && myUserId !== 'unknown_user' && !result.includes(myUserId) && Object.keys(players).length === 0) {
+          result.push(myUserId);
+        }
+        if (selectedUserId && selectedUserId !== 'unknown_user' && !result.includes(selectedUserId) && players[selectedUserId]) {
+          result.push(selectedUserId);
+        }
+      }
+      return result;
+    }
+
+    // ==========================================
+    // 並び替え・削除モーダル処理
+    // ==========================================
+    function renderManageList() {
+      const container = document.getElementById('manageListBody');
+      const ids = getOrderedIds(false);
+      if (ids.length === 0) {
+        container.innerHTML = '<div class="empty-msg">メンバーがいません</div>';
+        return;
+      }
+      const players = latestState.players || {};
+      container.innerHTML = ids.map((uid, idx) => {
+        const name = (uid === myUserId) ? myUserName : ((players[uid] && players[uid].name) || '名無し');
+        const upDisabled = idx === 0 ? 'disabled' : '';
+        const downDisabled = idx === ids.length - 1 ? 'disabled' : '';
+        return `
+          <div class="manage-row">
+            <div class="manage-name">${idx + 1}. ${escapeHtml(name)}</div>
+            <div class="manage-btns">
+              <button class="m-btn" ${upDisabled} onclick="moveMemberOrder(${idx}, -1)">↑</button>
+              <button class="m-btn" ${downDisabled} onclick="moveMemberOrder(${idx}, 1)">↓</button>
+              <button class="m-btn m-btn-del" onclick="deleteMember('${escapeHtml(uid)}')">削除</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openManageModal() {
+      renderManageList();
+      document.getElementById('manageModalBg').style.display = 'flex';
+    }
+
+    function closeManageModal() {
+      document.getElementById('manageModalBg').style.display = 'none';
+    }
+
+    async function moveMemberOrder(index, dir) {
+      const ids = getOrderedIds(false);
+      const targetIdx = index + dir;
+      if (targetIdx < 0 || targetIdx >= ids.length) return;
+
+      const tmp = ids[index];
+      ids[index] = ids[targetIdx];
+      ids[targetIdx] = tmp;
+
+      syncVersion++;
+      const myVer = syncVersion;
+      latestState.order = ids;
+      renderManageList();
+      renderState(latestState);
+
+      setSyncBusy(true);
+      try {
+        const res = await callGasApi({
+          action: 'reorderMembers',
+          chatId: chatId,
+          order: ids,
+          actorName: myUserName
+        });
+        if (res && res.ok && res.state && myVer === syncVersion) {
+          renderState(res.state);
+          renderManageList();
+        }
+      } catch (e) {
+        alert("並び替えの保存に失敗しました");
+      } finally {
+        setSyncBusy(false);
+      }
+    }
+
+    async function deleteMember(uid) {
+      const players = latestState.players || {};
+      const targetName = (players[uid] && players[uid].name) || 'このメンバー';
+      if (!confirm(`「${targetName}」をボードから削除しますか？`)) return;
+
+      syncVersion++;
+      const myVer = syncVersion;
+      delete latestState.players[uid];
+      latestState.order = (latestState.order || []).filter(id => id !== uid);
+
+      if (selectedUserId === uid) {
+        selectedUserId = myUserId;
+        selectedUserName = myUserName;
+        updateTargetLabel();
+      }
+
+      pushLocalLog(`🗑️ ${myUserName}が ${targetName} を削除`);
+      renderManageList();
+      renderState(latestState);
+
+      setSyncBusy(true);
+      try {
+        const res = await callGasApi({
+          action: 'removeMember',
+          chatId: chatId,
+          targetUserId: uid,
+          actorName: myUserName
+        });
+        if (res && res.ok && res.state && myVer === syncVersion) {
+          renderState(res.state);
+          updateConnectedStatus(res.state.players);
+          renderManageList();
+        }
+      } catch (e) {
+        alert("削除に失敗しました");
+      } finally {
+        setSyncBusy(false);
+      }
+    }
+
+    // ==========================================
+    // 戦績推移グラフモーダル処理
+    // ==========================================
+    function openGraphModal() {
+      document.getElementById('graphModalBg').style.display = 'flex';
+      drawTrendChart();
+    }
+
+    function closeGraphModal() {
+      document.getElementById('graphModalBg').style.display = 'none';
+    }
+
+    function drawTrendChart() {
+      const canvas = document.getElementById('trendCanvas');
+      const legendEl = document.getElementById('chartLegend');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const width = rect.width || 300;
+      const height = rect.height || 210;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, width, height);
+
+      const ids = getOrderedIds(false);
+      const players = latestState.players || {};
+      const changeCount = Number(latestState.changeCount) || 0;
+
+      if (ids.length === 0) {
+        ctx.fillStyle = "#6c757d";
+        ctx.font = "12px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("データがありません", width / 2, height / 2);
+        legendEl.innerHTML = "";
+        return;
+      }
+
+      // 進行中ラウンドに誰か1人でも入力があるか確認
+      const hasOngoing = ids.some(uid => (Number(players[uid] && players[uid].current) || 0) !== 0);
+      const labels = ["開始"];
+      for (let r = 1; r <= changeCount; r++) labels.push(`${r}戦`);
+      if (hasOngoing || changeCount === 0) labels.push("現在");
+
+      // 各プレイヤーの累計推移配列を作成
+      const series = ids.map((uid, idx) => {
+        const p = players[uid] || {};
+        const name = (uid === myUserId) ? myUserName : (p.name || '名無し');
+        const hist = Array.isArray(p.history) ? p.history : [];
+        const points = [0];
+        let running = 0;
+        for (let r = 0; r < changeCount; r++) {
+          running += Number(hist[r]) || 0;
+          points.push(running);
+        }
+        if (hasOngoing || changeCount === 0) {
+          running += Number(p.current) || 0;
+          points.push(running);
+        }
+        return {
+          name: name,
+          color: CHART_COLORS[idx % CHART_COLORS.length],
+          points: points,
+          latest: running
+        };
+      });
+
+      // Y軸の最大・最小値を計算
+      let maxVal = 0;
+      let minVal = 0;
+      series.forEach(s => {
+        s.points.forEach(v => {
+          if (v > maxVal) maxVal = v;
+          if (v < minVal) minVal = v;
+        });
+      });
+      if (maxVal === 0 && minVal === 0) {
+        maxVal = 100;
+        minVal = -100;
+      } else {
+        const span = maxVal - minVal;
+        maxVal += span * 0.15;
+        minVal -= span * 0.15;
+      }
+
+      const padLeft = 44;
+      const padRight = 14;
+      const padTop = 14;
+      const padBottom = 24;
+      const plotW = width - padLeft - padRight;
+      const plotH = height - padTop - padBottom;
+
+      const getX = (i) => {
+        if (labels.length <= 1) return padLeft + plotW / 2;
+        return padLeft + (plotW * i) / (labels.length - 1);
+      };
+      const getY = (val) => {
+        return padTop + plotH * (1 - (val - minVal) / (maxVal - minVal));
+      };
+
+      // 0の基準線（破線）と上下目盛り
+      const zeroY = getY(0);
+      ctx.strokeStyle = "#495057";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      ctx.beginPath();
+      ctx.moveTo(padLeft, zeroY);
+      ctx.lineTo(width - padRight, zeroY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "#868e96";
+      ctx.font = "10px sans-serif";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillText(Math.round(maxVal), padLeft - 5, padTop + 4);
+      ctx.fillText("0", padLeft - 5, zeroY);
+      ctx.fillText(Math.round(minVal), padLeft - 5, height - padBottom - 4);
+
+      // X軸ラベルと縦補助線
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      labels.forEach((lbl, i) => {
+        const x = getX(i);
+        ctx.strokeStyle = "#23272f";
+        ctx.beginPath();
+        ctx.moveTo(x, padTop);
+        ctx.lineTo(x, height - padBottom);
+        ctx.stroke();
+
+        ctx.fillStyle = "#adb5bd";
+        ctx.fillText(lbl, x, height - padBottom + 6);
+      });
+
+      // 各プレイヤーの折れ線とポイントを描画
+      series.forEach(s => {
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        s.points.forEach((v, i) => {
+          const x = getX(i);
+          const y = getY(v);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        s.points.forEach((v, i) => {
+          const x = getX(i);
+          const y = getY(v);
+          ctx.fillStyle = s.color;
+          ctx.beginPath();
+          ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      });
+
+      // 凡例HTMLを描画
+      legendEl.innerHTML = series.map(s => `
+        <div class="legend-item">
+          <span class="legend-dot" style="background:${s.color};"></span>
+          <span>${escapeHtml(s.name)} (${formatSigned(s.latest)})</span>
+        </div>
+      `).join('');
+    }
+
+    // ==========================================
+    // 操作ログ・称号一覧モーダル
+    // ==========================================
     function renderLogList() {
       const container = document.getElementById('logListBody');
       const logs = Array.isArray(latestState.logs) ? latestState.logs : [];
@@ -602,8 +969,11 @@
       document.getElementById('awardModalBg').style.display = 'none';
     }
 
+    // ==========================================
+    // メイン画面描画
+    // ==========================================
     function renderState(state) {
-      latestState = state || { players: {}, changeCount: 0, logs: [] };
+      latestState = state || { players: {}, order: [], changeCount: 0, logs: [] };
       const changeCount = Number(latestState.changeCount) || 0;
       const showTotalCol = changeCount > 0;
 
@@ -619,17 +989,13 @@
       }
 
       const players = latestState.players || {};
-      const allIds = new Set([
-        myUserId,
-        selectedUserId,
-        ...Object.keys(players)
-      ]);
+      const orderedIds = getOrderedIds(true);
 
       let sumCurrent = 0;
       let hasAnyCurrent = false;
       let html = '';
 
-      allIds.forEach(uid => {
+      orderedIds.forEach(uid => {
         if (!uid || uid === 'unknown_user') return;
         const p = players[uid];
         const name = (uid === myUserId) ? myUserName : ((p && p.name) || (uid === selectedUserId ? selectedUserName : '名無し'));
@@ -645,6 +1011,7 @@
 
         const isSelected = (uid === selectedUserId) ? 'selected' : '';
         const meBadge = (uid === myUserId) ? '<span class="me-tag">自分</span>' : '';
+        const streakBadge = getStreakIcon(p);
         const colClass = showTotalCol ? 'cols-5' : 'cols-4';
         const totalCell = showTotalCol
           ? `<div class="col-num ${colorClass(total)}">${formatSigned(total)}</div>`
@@ -652,7 +1019,7 @@
 
         html += `
           <div class="member-row ${colClass} ${isSelected}" data-uid="${escapeHtml(uid)}" data-name="${escapeHtml(name)}">
-            <div class="member-name">${escapeHtml(name)}${meBadge}</div>
+            <div class="member-name">${escapeHtml(name)}${streakBadge}${meBadge}</div>
             <div class="col-sub">${formatSigned(prev)}</div>
             <div class="col-num ${colorClass(diff)}">${diff !== 0 ? formatSigned(diff) : '0'}</div>
             <div class="col-num ${colorClass(cur)}">${formatSigned(cur)}</div>
@@ -687,6 +1054,12 @@
       if (document.getElementById('logModalBg').style.display === 'flex') {
         renderLogList();
       }
+      if (document.getElementById('manageModalBg').style.display === 'flex') {
+        renderManageList();
+      }
+      if (document.getElementById('graphModalBg').style.display === 'flex') {
+        drawTrendChart();
+      }
     }
 
     async function fetchState() {
@@ -703,10 +1076,6 @@
         if (res && res.ok && res.state && reqVer === syncVersion) {
           renderState(res.state);
           updateConnectedStatus(res.state.players);
-
-          if (myUserId && myUserId !== 'unknown_user' && (!res.state.players || !res.state.players[myUserId])) {
-            registerMemberToServer(myUserId, myUserName);
-          }
         }
       } catch (e) {
         setRoomStatus(false, "⚠️ GAS通信エラー");
@@ -736,6 +1105,9 @@
           ops: []
         };
       }
+      if (!Array.isArray(latestState.order)) latestState.order = [];
+      if (!latestState.order.includes(selectedUserId)) latestState.order.push(selectedUserId);
+
       const p = latestState.players[selectedUserId];
       if (!Array.isArray(p.ops)) {
         const existingCur = Number(p.current) || 0;
