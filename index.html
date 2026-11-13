@@ -10,17 +10,17 @@
     body { background: #121417; color: #f1f3f5; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
     
     /* ヘッダー */
-    .header { display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; background: #1c1f24; border-bottom: 1px solid #2c3038; flex-shrink: 0; }
-    .header-left { display: flex; align-items: center; gap: 6px; }
-    .header-right { display: flex; align-items: center; gap: 5px; }
-    .badge { font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 10px; }
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 7px 10px; background: #1c1f24; border-bottom: 1px solid #2c3038; flex-shrink: 0; gap: 4px; }
+    .header-left { display: flex; align-items: center; gap: 5px; min-width: 0; }
+    .header-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .badge { font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; white-space: nowrap; }
     .badge-round { background: rgba(255, 146, 43, 0.2); color: #ffa94d; border: 1px solid #ff922b; }
-    .badge-room { background: rgba(77, 171, 247, 0.15); color: #74c0fc; border: 1px solid rgba(77, 171, 247, 0.4); }
-    .badge-err { background: rgba(250, 82, 82, 0.2); color: #ff8787; border: 1px solid #fa5252; }
-    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #06c755; display: inline-block; }
+    .badge-room { background: rgba(77, 171, 247, 0.15); color: #74c0fc; border: 1px solid rgba(77, 171, 247, 0.4); overflow: hidden; text-overflow: ellipsis; }
+    .badge-err { background: rgba(250, 82, 82, 0.2); color: #ff8787; border: 1px solid #fa5252; overflow: hidden; text-overflow: ellipsis; }
+    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #06c755; display: inline-block; flex-shrink: 0; }
     .sync-dot.busy { background: #ffa94d; }
     .sync-dot.err { background: #fa5252; }
-    .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
+    .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 4px 7px; font-size: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; }
     .btn-refresh:active { background: #3d4452; }
 
     /* 上部ボード */
@@ -79,19 +79,24 @@
     .key-send { background: #06c755; color: #fff; grid-row: span 2; height: 100%; font-size: 17px; }
     .key-send:active { background: #05a847; }
 
-    /* モーダル */
+    /* モーダル共通 */
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
-    .modal-card { background: #1e2229; border: 1px solid #495057; border-radius: 16px; width: 100%; max-width: 340px; padding: 20px; text-align: center; }
-    .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 10px; }
+    .modal-card { background: #1e2229; border: 1px solid #495057; border-radius: 16px; width: 100%; max-width: 340px; padding: 18px; text-align: center; }
+    .modal-title { font-size: 16px; font-weight: 800; margin-bottom: 10px; }
     .modal-body { font-size: 14px; line-height: 1.6; margin-bottom: 16px; color: #e9ecef; white-space: pre-wrap; }
     .modal-btn { width: 100%; padding: 11px; border: none; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; background: #06c755; color: #fff; }
 
-    /* 操作ログモーダル用 */
-    .log-list { max-height: 260px; overflow-y: auto; text-align: left; background: #121417; border: 1px solid #2c3038; border-radius: 10px; padding: 8px 10px; margin-bottom: 14px; }
+    /* 操作ログ＆称号条件モーダル用 */
+    .log-list { max-height: 290px; overflow-y: auto; text-align: left; background: #121417; border: 1px solid #2c3038; border-radius: 10px; padding: 8px 10px; margin-bottom: 14px; }
     .log-item { display: flex; gap: 8px; font-size: 12px; padding: 6px 0; border-bottom: 1px solid #23272f; line-height: 1.4; }
     .log-item:last-child { border-bottom: none; }
     .log-time { color: #868e96; font-size: 11px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
     .log-text { color: #f1f3f5; word-break: break-all; }
+
+    .award-item { padding: 7px 0; border-bottom: 1px solid #23272f; }
+    .award-item:last-child { border-bottom: none; }
+    .award-name { font-size: 12px; font-weight: bold; color: #ffa94d; margin-bottom: 2px; }
+    .award-desc { font-size: 11px; color: #ced4da; line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -103,6 +108,7 @@
       <span id="roomBadge" class="badge badge-room">接続中...</span>
     </div>
     <div class="header-right">
+      <button class="btn-refresh" onclick="openAwardModal()">🏆 称号</button>
       <button class="btn-refresh" onclick="openLogModal()">📜 ログ</button>
       <button class="btn-refresh" onclick="manualRefresh()">↻ 更新</button>
     </div>
@@ -187,6 +193,60 @@
         <div class="empty-msg">まだ操作履歴はありません</div>
       </div>
       <button class="modal-btn" onclick="closeLogModal()">閉じる</button>
+    </div>
+  </div>
+
+  <!-- 称号条件一覧モーダル -->
+  <div id="awardModalBg" class="modal-bg" onclick="if(event.target===this) closeAwardModal()">
+    <div class="modal-card">
+      <div class="modal-title">🏆 決算時の称号一覧（全11種）</div>
+      <div class="log-list">
+        <div class="award-item">
+          <div class="award-name">👑 総合トップ</div>
+          <div class="award-desc">トータル収支がプラス（+1以上）の中で1位</div>
+        </div>
+        <div class="award-item">
+          <div class="award-name">💸 今日のスポンサー</div>
+          <div class="award-desc">トータル収支がマイナスの中で最下位</div>
+        </div>
+        <div class="award-item">
+          <div class="award-name">💥 最大の一撃</div>
+          <div class="award-desc">全戦を通じて1戦あたりのプラス幅が最高</div>
+        </div>
+        <div class="award-item">
+          <div class="award-name">💀 痛恨の一撃</div>
+          <div class="award-desc">全戦を通じて1戦あたりのマイナス幅が最大</div>
+        </div>
+        <div class="award-item">
+          <div class="award-name">🚀 大逆転賞</div>
+          <div class="award-desc">途中でマイナスになりつつ、最終的にトータルプラス（2戦以上）</div>
+        </div>
+        <div class="award-item">
+          <div class="award-name">📉 天国から地獄</div>
+          <div class="award-desc">途中でプラスになりつつ、最終的にトータルマイナス（2戦以上）</div>
+        </div>
+        <div class="award-item">
+          <div class="award-name">🔥 無敗の王者</div>
+          <div class="award-desc">一度もマイナスにならず、トータルプラスで終了（2戦以上）</div>
+        </div>
+        <div class="award-item">
+          <div class="award-name">🏃 完全逃げ切り</div>
+          <div class="award-desc">第1戦から最終戦まで常に累計1位を譲らず優勝（2戦以上）</div>
+        </div>
+        <div class="award-item">
+          <div class="award-name">🎢 ジェットコースター</div>
+          <div class="award-desc">プラスとマイナスの両方があり、1戦の最高点と最低点の振り幅が最大（2戦以上）</div>
+        </div>
+        <div class="award-item">
+          <div class="award-name">🧱 鉄壁の安定感</div>
+          <div class="award-desc">1戦ごとのスコアのブレ幅（最高点と最低点の差）が最小（2戦以上）</div>
+        </div>
+        <div class="award-item">
+          <div class="award-name">⚖️ プラマイゼロ職人</div>
+          <div class="award-desc">点数変動ありで最終収支がぴったり0（不在時は最も0に近い人）</div>
+        </div>
+      </div>
+      <button class="modal-btn" onclick="closeAwardModal()">閉じる</button>
     </div>
   </div>
 
@@ -478,6 +538,14 @@
 
     function closeLogModal() {
       document.getElementById('logModalBg').style.display = 'none';
+    }
+
+    function openAwardModal() {
+      document.getElementById('awardModalBg').style.display = 'flex';
+    }
+
+    function closeAwardModal() {
+      document.getElementById('awardModalBg').style.display = 'none';
     }
 
     function renderState(state) {
