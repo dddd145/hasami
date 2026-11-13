@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>鋏さん 集計ボード</title>
+  <title>Chomboard</title>
   <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -186,7 +186,7 @@
   </div>
 
   <div class="cmd-bar">
-    <button class="cmd-btn btn-change" onclick="runChange()">ゲーム変更</button>
+    <button class="cmd-btn btn-change" onclick="runChange()">ヤギり</button>
     <button class="cmd-btn btn-settle" onclick="runSettle()">決算❤</button>
   </div>
 
@@ -383,7 +383,7 @@
         if (res && res.stopped) {
           if (pollTimer) clearTimeout(pollTimer);
           pollTimer = null;
-          setRoomStatus(false, "🛑 停止中（「鋏さん」で再開）");
+          setRoomStatus(false, "🛑 停止中");
           return;
         }
         if (res && res.ok && res.state) {
@@ -697,7 +697,7 @@
     async function deleteMember(uid) {
       const players = latestState.players || {};
       const targetName = (players[uid] && players[uid].name) || 'このメンバー';
-      if (!confirm(`「${targetName}」をボードから削除しますか？`)) return;
+      if (!confirm(`「${targetName}」を削除しますか？`)) return;
 
       syncVersion++;
       const myVer = syncVersion;
@@ -1003,12 +1003,12 @@
         hintEl.innerText = "全員の合計が 0 だといいね";
       } else if (sumCurrent === 0) {
         totalCard.className = "total-card ok";
-        checkTitle.innerText = "✅ 波佐見OK（合算一致）";
-        hintEl.innerText = "全員の「現在」の合計が 0 で一致しています";
+        checkTitle.innerText = "合計 0 ";
+        hintEl.innerText = "多分波佐見できてる";
       } else {
         totalCard.className = "total-card ng";
-        checkTitle.innerText = "⚠️ 合算ズレあり";
-        hintEl.innerText = `現在の合計が 0 ではありません（差額: ${formatSigned(-sumCurrent)}）`;
+        checkTitle.innerText = "ズレてる";
+        hintEl.innerText = `多分ズレてます（差額: ${formatSigned(-sumCurrent)}）`;
       }
 
       if (document.getElementById('logModalBg').style.display === 'flex') {
@@ -1030,7 +1030,7 @@
         if (res && res.stopped) {
           if (pollTimer) clearTimeout(pollTimer);
           pollTimer = null;
-          setRoomStatus(false, "🛑 停止中（「鋏さん」で再開）");
+          setRoomStatus(false, "🛑 停止中");
           return;
         }
         if (res && res.ok && res.state && reqVer === syncVersion) {
@@ -1155,7 +1155,7 @@
         p.current = 0;
       }
       latestState.changeCount = finishedRound;
-      pushLocalLog(`🔄 ${myUserName}がゲーム変更（第${finishedRound}戦確定）`);
+      pushLocalLog(`🔄 ${myUserName}がヤギり（第${finishedRound}戦確定）`);
       renderState(latestState);
 
       setSyncBusy(true);
@@ -1196,7 +1196,7 @@
           }
 
           if (sentByUser) {
-            openModal('💰 決算完了', 'トークに決算結果を送信し、全数値をリセットしました。（配信枠0通消費）');
+            openModal('決算完了', 'トークに決算結果を送信');
             return;
           }
 
@@ -1207,7 +1207,7 @@
           });
 
           if (fallbackRes.ok) {
-            openModal('💰 決算完了', '公式LINEからトークに決算結果を送信し、全数値をリセットしました。');
+            openModal('決算完了', 'トークに決算結果を送信');
           } else {
             openModal('⚠️ トーク送信エラー', fallbackRes.error || '送信に失敗しました');
           }
