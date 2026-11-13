@@ -12,6 +12,7 @@
     /* ヘッダー */
     .header { display: flex; justify-content: space-between; align-items: center; padding: 7px 12px; background: #1c1f24; border-bottom: 1px solid #2c3038; flex-shrink: 0; }
     .header-left { display: flex; align-items: center; gap: 6px; }
+    .header-right { display: flex; align-items: center; gap: 5px; }
     .badge { font-size: 10px; font-weight: bold; padding: 2px 7px; border-radius: 10px; }
     .badge-round { background: rgba(255, 146, 43, 0.2); color: #ffa94d; border: 1px solid #ff922b; }
     .badge-room { background: rgba(77, 171, 247, 0.15); color: #74c0fc; border: 1px solid rgba(77, 171, 247, 0.4); }
@@ -19,7 +20,8 @@
     .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #06c755; display: inline-block; }
     .sync-dot.busy { background: #ffa94d; }
     .sync-dot.err { background: #fa5252; }
-    .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 4px 9px; font-size: 11px; cursor: pointer; }
+    .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 4px 8px; font-size: 11px; cursor: pointer; }
+    .btn-refresh:active { background: #3d4452; }
 
     /* 上部ボード */
     .board { padding: 6px 10px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
@@ -83,6 +85,13 @@
     .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 10px; }
     .modal-body { font-size: 14px; line-height: 1.6; margin-bottom: 16px; color: #e9ecef; white-space: pre-wrap; }
     .modal-btn { width: 100%; padding: 11px; border: none; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; background: #06c755; color: #fff; }
+
+    /* 操作ログモーダル用 */
+    .log-list { max-height: 260px; overflow-y: auto; text-align: left; background: #121417; border: 1px solid #2c3038; border-radius: 10px; padding: 8px 10px; margin-bottom: 14px; }
+    .log-item { display: flex; gap: 8px; font-size: 12px; padding: 6px 0; border-bottom: 1px solid #23272f; line-height: 1.4; }
+    .log-item:last-child { border-bottom: none; }
+    .log-time { color: #868e96; font-size: 11px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+    .log-text { color: #f1f3f5; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -93,7 +102,10 @@
       <span id="roundBadge" class="badge badge-round">第1戦</span>
       <span id="roomBadge" class="badge badge-room">接続中...</span>
     </div>
-    <button class="btn-refresh" onclick="manualRefresh()">↻ 更新</button>
+    <div class="header-right">
+      <button class="btn-refresh" onclick="openLogModal()">📜 ログ</button>
+      <button class="btn-refresh" onclick="manualRefresh()">↻ 更新</button>
+    </div>
   </div>
 
   <div class="board">
@@ -158,11 +170,23 @@
     </div>
   </div>
 
+  <!-- 通常通知モーダル -->
   <div id="modalBg" class="modal-bg">
     <div class="modal-card">
       <div id="modalTitle" class="modal-title"></div>
       <div id="modalBody" class="modal-body"></div>
       <button class="modal-btn" onclick="closeModal()">OK</button>
+    </div>
+  </div>
+
+  <!-- 操作ログモーダル -->
+  <div id="logModalBg" class="modal-bg" onclick="if(event.target===this) closeLogModal()">
+    <div class="modal-card">
+      <div class="modal-title">📜 操作ログ（新しい順）</div>
+      <div id="logListBody" class="log-list">
+        <div class="empty-msg">まだ操作履歴はありません</div>
+      </div>
+      <button class="modal-btn" onclick="closeLogModal()">閉じる</button>
     </div>
   </div>
 
@@ -189,7 +213,7 @@
     let myUserName = "自分";
     let selectedUserId = "unknown_user";
     let selectedUserName = "自分";
-    let latestState = { players: {}, changeCount: 0 };
+    let latestState = { players: {}, changeCount: 0, logs: [] };
 
     let isMinus = false;
     let rawDigits = "";
@@ -403,6 +427,19 @@
         .replace(/"/g, '&quot;');
     }
 
+    function getNowTimeStr() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      return `${hh}:${mm}`;
+    }
+
+    function pushLocalLog(text) {
+      if (!Array.isArray(latestState.logs)) latestState.logs = [];
+      latestState.logs.unshift({ time: getNowTimeStr(), text: text });
+      if (latestState.logs.length > 40) latestState.logs = latestState.logs.slice(0, 40);
+    }
+
     function recalcLocalPlayer(p) {
       const ops = Array.isArray(p.ops) ? p.ops : [];
       if (ops.length === 0) {
@@ -419,8 +456,32 @@
       p.prev = total - lastDelta;
     }
 
+    function renderLogList() {
+      const container = document.getElementById('logListBody');
+      const logs = Array.isArray(latestState.logs) ? latestState.logs : [];
+      if (logs.length === 0) {
+        container.innerHTML = '<div class="empty-msg">まだ操作履歴はありません</div>';
+        return;
+      }
+      container.innerHTML = logs.map(item => `
+        <div class="log-item">
+          <span class="log-time">${escapeHtml(item.time || '')}</span>
+          <span class="log-text">${escapeHtml(item.text || '')}</span>
+        </div>
+      `).join('');
+    }
+
+    function openLogModal() {
+      renderLogList();
+      document.getElementById('logModalBg').style.display = 'flex';
+    }
+
+    function closeLogModal() {
+      document.getElementById('logModalBg').style.display = 'none';
+    }
+
     function renderState(state) {
-      latestState = state || { players: {}, changeCount: 0 };
+      latestState = state || { players: {}, changeCount: 0, logs: [] };
       const changeCount = Number(latestState.changeCount) || 0;
       const showTotalCol = changeCount > 0;
 
@@ -500,6 +561,10 @@
         checkTitle.innerText = "⚠️ 合算ズレあり";
         hintEl.innerText = `現在の合計が 0 ではありません（差額: ${formatSigned(-sumCurrent)}）`;
       }
+
+      if (document.getElementById('logModalBg').style.display === 'flex') {
+        renderLogList();
+      }
     }
 
     async function fetchState() {
@@ -554,6 +619,11 @@
       p.name = selectedUserName;
       p.ops.push(val);
       recalcLocalPlayer(p);
+
+      const logMsg = (myUserName === selectedUserName)
+        ? `${selectedUserName} に ${formatSigned(val)}`
+        : `${myUserName} → ${selectedUserName} に ${formatSigned(val)}`;
+      pushLocalLog(logMsg);
       renderState(latestState);
 
       setSyncBusy(true);
@@ -563,6 +633,7 @@
           chatId: chatId,
           userId: selectedUserId,
           userName: selectedUserName,
+          actorName: myUserName,
           value: val
         });
         if (res.ok && res.state && myVer === syncVersion) {
@@ -588,8 +659,9 @@
 
       syncVersion++;
       const myVer = syncVersion;
-      p.ops.pop();
+      const removed = p.ops.pop();
       recalcLocalPlayer(p);
+      pushLocalLog(`↩ ${myUserName}が ${selectedUserName} の ${formatSigned(removed)} を取消`);
       renderState(latestState);
 
       setSyncBusy(true);
@@ -597,7 +669,8 @@
         const res = await callGasApi({
           action: 'undoAdd',
           chatId: chatId,
-          userId: selectedUserId
+          userId: selectedUserId,
+          actorName: myUserName
         });
         if (res.ok && res.state && myVer === syncVersion) {
           renderState(res.state);
@@ -612,6 +685,8 @@
     async function runChange() {
       syncVersion++;
       const myVer = syncVersion;
+      const finishedRound = (Number(latestState.changeCount) || 0) + 1;
+
       for (const uid in latestState.players) {
         const p = latestState.players[uid];
         if (!Array.isArray(p.history)) p.history = [];
@@ -622,12 +697,17 @@
         p.prev = 0;
         p.current = 0;
       }
-      latestState.changeCount = (Number(latestState.changeCount) || 0) + 1;
+      latestState.changeCount = finishedRound;
+      pushLocalLog(`🔄 ${myUserName}がゲーム変更（第${finishedRound}戦確定）`);
       renderState(latestState);
 
       setSyncBusy(true);
       try {
-        const res = await callGasApi({ action: 'commitChange', chatId: chatId });
+        const res = await callGasApi({
+          action: 'commitChange',
+          chatId: chatId,
+          actorName: myUserName
+        });
         if (res.ok && res.state && myVer === syncVersion) {
           renderState(res.state);
         }
@@ -638,7 +718,6 @@
       }
     }
 
-    // ハイブリッド決算：まず0通消費の本人送信を試し、ダメな場合のみ公式LINEから送信
     async function runSettle() {
       if (!confirm('決算結果をトークに送信し、すべての数値をリセットしますか？')) return;
       syncVersion++;
@@ -649,7 +728,6 @@
         if (res.ok && res.state) {
           if (myVer === syncVersion) renderState(res.state);
 
-          // ① まずは配信数0通の本人送信（liff.sendMessages）を試す
           let sentByUser = false;
           if (liff.isInClient() && res.flexMessage) {
             try {
@@ -665,7 +743,6 @@
             return;
           }
 
-          // ② 友だち未追加などで本人送信できなかった場合のみ公式LINEから送信
           const fallbackRes = await callGasApi({
             action: 'pushSettleFallback',
             chatId: chatId,
