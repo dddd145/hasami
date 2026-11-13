@@ -24,7 +24,7 @@
     .btn-refresh:active { background: #3d4452; }
 
     /* 上部ボード */
-    .board { flex: 1; min-height: 0; padding: 8px 10px 8px; display: flex; flex-direction: column; gap: 8px; }
+    .board { flex: 1; min-height: 0; padding: 8px 10px 8px; display: flex; flex-direction: column; gap: 7px; }
     
     /* 合算チェックカード */
     .total-card { background: #1e2229; border-radius: 10px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; transition: all 0.15s; flex-shrink: 0; }
@@ -36,6 +36,13 @@
     .val-plus { color: #4dabf7; }
     .val-minus { color: #ff6b6b; }
     .val-zero { color: #51cf66; }
+
+    /* コマンドバー（画面最上部に配置して誤タップ完全防止） */
+    .cmd-bar { display: grid; grid-template-columns: 1fr 1.15fr; gap: 8px; flex-shrink: 0; }
+    .cmd-btn { border: none; border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: bold; color: #fff; cursor: pointer; }
+    .cmd-btn:active { opacity: 0.8; }
+    .btn-change { background: #1971c2; }
+    .btn-settle { background: #e67700; }
 
     /* テーブル一覧 */
     .table-box { flex: 1; min-height: 0; background: #1c1f24; border-radius: 10px; border: 1px solid #2c3038; overflow: hidden; display: flex; flex-direction: column; }
@@ -58,13 +65,6 @@
     .tool-btn { background: #2c3038; color: #e9ecef; border: none; border-radius: 6px; padding: 5px 8px; font-size: 11px; font-weight: bold; cursor: pointer; white-space: nowrap; }
     .tool-btn:active { background: #3d4452; }
     .tool-btn-del { background: rgba(201, 42, 42, 0.25); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.5); }
-
-    /* コマンドバー（入力エリアから離して誤タップ防止） */
-    .cmd-bar { display: grid; grid-template-columns: 1fr 1.15fr; gap: 8px; flex-shrink: 0; }
-    .cmd-btn { border: none; border-radius: 9px; padding: 9px 6px; font-size: 12px; font-weight: bold; color: #fff; cursor: pointer; }
-    .cmd-btn:active { opacity: 0.8; }
-    .btn-change { background: #1971c2; }
-    .btn-settle { background: #e67700; }
 
     /* キーボード入力バー（画面最下部は入力操作のみに限定） */
     .calc-area { background: #1c1f24; padding: 9px 10px max(12px, env(safe-area-inset-bottom)); border-top: 1px solid #2c3038; flex-shrink: 0; }
@@ -145,6 +145,12 @@
       <div id="totalVal" class="total-val val-zero">0</div>
     </div>
 
+    <!-- 最上部（チェックカード直下）に移動したコマンドバー -->
+    <div class="cmd-bar">
+      <button class="cmd-btn btn-change" onclick="confirmChange()">🔄 ヤギり</button>
+      <button class="cmd-btn btn-settle" onclick="confirmSettle()">決算❤</button>
+    </div>
+
     <div class="table-box">
       <div id="tableHeader" class="table-header cols-4">
         <span>プレイヤー</span>
@@ -160,12 +166,6 @@
         <button class="tool-btn" onclick="openManageModal()">↕️ 席順・削除</button>
         <button class="tool-btn tool-btn-del" onclick="undoSelected()">↩ 1つ戻す</button>
       </div>
-    </div>
-
-    <!-- 入力バーから離したコマンドバー -->
-    <div class="cmd-bar">
-      <button class="cmd-btn btn-change" onclick="confirmChange()">🔄 ヤギり</button>
-      <button class="cmd-btn btn-settle" onclick="confirmSettle()">決算❤</button>
     </div>
   </div>
 
