@@ -250,7 +250,6 @@
       setRoomStatus(true, label);
     }
 
-    // サーバーへプレイヤーを登録（全員の画面へ共有）
     async function registerMemberToServer(uid, name) {
       if (!uid || uid === 'unknown_user' || isJoining) return;
       isJoining = true;
@@ -261,6 +260,12 @@
           userId: uid,
           userName: name
         });
+        if (res && res.stopped) {
+          if (pollTimer) clearTimeout(pollTimer);
+          pollTimer = null;
+          setRoomStatus(false, "🛑 停止中（「鋏さん」で再開）");
+          return;
+        }
         if (res && res.ok && res.state) {
           renderState(res.state);
           updateConnectedStatus(res.state.players);
@@ -283,10 +288,13 @@
     async function startFastPolling() {
       if (pollTimer) clearTimeout(pollTimer);
       await fetchState();
-      pollTimer = setTimeout(startFastPolling, 1500);
+      if (pollTimer !== null) {
+        pollTimer = setTimeout(startFastPolling, 1500);
+      }
     }
 
     function manualRefresh() {
+      pollTimer = 0;
       startFastPolling();
     }
 
@@ -471,7 +479,6 @@
 
       document.getElementById('memberList').innerHTML = html || '<div class="empty-msg">メンバーがいません</div>';
 
-      // 合算チェックカード（「現在」の値の合計のみを見る）
       const totalCard = document.getElementById('totalCard');
       const checkTitle = document.getElementById('checkTitle');
       const hintEl = document.getElementById('remainHint');
@@ -510,7 +517,6 @@
           renderState(res.state);
           updateConnectedStatus(res.state.players);
 
-          // サーバーの名簿に自分が載っていなければ自動再登録（リセット後や通信復帰時用）
           if (myUserId && myUserId !== 'unknown_user' && (!res.state.players || !res.state.players[myUserId])) {
             registerMemberToServer(myUserId, myUserName);
           }
@@ -570,7 +576,6 @@
       }
     }
 
-    // 直前の加算ボタンを押す前の状態に1つ戻す
     async function undoSelected() {
       const p = latestState.players[selectedUserId];
       if (!p) return;
@@ -633,8 +638,9 @@
       }
     }
 
+    // ハイブリッド決算：まず0通消費の本人送信を試し、ダメな場合のみ公式LINEから送信
     async function runSettle() {
-      if (!confirm('決算結果を公式LINEからトークに送信し、すべての数値をリセットしますか？')) return;
+      if (!confirm('決算結果をトークに送信し、すべての数値をリセットしますか？')) return;
       syncVersion++;
       const myVer = syncVersion;
       setSyncBusy(true);
@@ -642,10 +648,34 @@
         const res = await callGasApi({ action: 'settle', chatId: chatId });
         if (res.ok && res.state) {
           if (myVer === syncVersion) renderState(res.state);
-          if (res.pushOk) {
+
+          // ① まずは配信数0通の本人送信（liff.sendMessages）を試す
+          let sentByUser = false;
+          if (liff.isInClient() && res.flexMessage) {
+            try {
+              await liff.sendMessages([res.flexMessage]);
+              sentByUser = true;
+            } catch (err) {
+              sentByUser = false;
+            }
+          }
+
+          if (sentByUser) {
+            openModal('💰 決算完了', 'トークに決算結果を送信し、全数値をリセットしました。（配信枠0通消費）');
+            return;
+          }
+
+          // ② 友だち未追加などで本人送信できなかった場合のみ公式LINEから送信
+          const fallbackRes = await callGasApi({
+            action: 'pushSettleFallback',
+            chatId: chatId,
+            flexMessage: res.flexMessage
+          });
+
+          if (fallbackRes.ok) {
             openModal('💰 決算完了', '公式LINEからトークに決算結果を送信し、全数値をリセットしました。');
           } else {
-            openModal('⚠️ トーク送信エラー', res.pushError || '送信に失敗しました');
+            openModal('⚠️ トーク送信エラー', fallbackRes.error || '送信に失敗しました');
           }
         }
       } catch (e) {
