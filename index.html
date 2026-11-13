@@ -24,7 +24,7 @@
     .btn-refresh:active { background: #3d4452; }
 
     /* 上部ボード */
-    .board { flex: 1; min-height: 0; padding: 8px 10px 6px; display: flex; flex-direction: column; gap: 8px; }
+    .board { flex: 1; min-height: 0; padding: 8px 10px 8px; display: flex; flex-direction: column; gap: 8px; }
     
     /* 合算チェックカード */
     .total-card { background: #1e2229; border-radius: 10px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; transition: all 0.15s; flex-shrink: 0; }
@@ -59,8 +59,15 @@
     .tool-btn:active { background: #3d4452; }
     .tool-btn-del { background: rgba(201, 42, 42, 0.25); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.5); }
 
-    /* キーボード入力バー */
-    .calc-area { background: #1c1f24; padding: 8px 10px; border-top: 1px solid #2c3038; flex-shrink: 0; }
+    /* コマンドバー（入力エリアから離して誤タップ防止） */
+    .cmd-bar { display: grid; grid-template-columns: 1fr 1.15fr; gap: 8px; flex-shrink: 0; }
+    .cmd-btn { border: none; border-radius: 9px; padding: 9px 6px; font-size: 12px; font-weight: bold; color: #fff; cursor: pointer; }
+    .cmd-btn:active { opacity: 0.8; }
+    .btn-change { background: #1971c2; }
+    .btn-settle { background: #e67700; }
+
+    /* キーボード入力バー（画面最下部は入力操作のみに限定） */
+    .calc-area { background: #1c1f24; padding: 9px 10px max(12px, env(safe-area-inset-bottom)); border-top: 1px solid #2c3038; flex-shrink: 0; }
     .target-bar { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #06c755; margin-bottom: 6px; font-weight: bold; }
     .input-row { display: flex; align-items: center; gap: 6px; }
     .input-box { flex: 1; min-width: 0; display: flex; align-items: center; background: #121417; border: 1px solid #343a46; border-radius: 10px; padding: 4px 8px; transition: border-color 0.15s; }
@@ -74,19 +81,15 @@
     .btn-send { background: #06c755; color: #fff; border: none; border-radius: 10px; padding: 0 16px; height: 44px; font-size: 15px; font-weight: bold; cursor: pointer; flex-shrink: 0; }
     .btn-send:active { background: #05a847; }
 
-    /* コマンドバー（ヤギり / 決算） */
-    .cmd-bar { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; padding: 6px 10px 12px; background: #181b20; border-top: 1px solid #2c3038; flex-shrink: 0; }
-    .cmd-btn { border: none; border-radius: 9px; padding: 10px 6px; font-size: 13px; font-weight: bold; color: #fff; cursor: pointer; }
-    .cmd-btn:active { opacity: 0.8; }
-    .btn-change { background: #1971c2; }
-    .btn-settle { background: #e67700; }
-
     /* モーダル共通 */
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; padding: 16px; }
     .modal-card { background: #1e2229; border: 1px solid #495057; border-radius: 16px; width: 100%; max-width: 350px; padding: 16px; text-align: center; }
     .modal-title { font-size: 16px; font-weight: 800; margin-bottom: 10px; }
     .modal-body { font-size: 14px; line-height: 1.6; margin-bottom: 16px; color: #e9ecef; white-space: pre-wrap; }
     .modal-btn { width: 100%; padding: 11px; border: none; border-radius: 10px; font-weight: bold; font-size: 14px; cursor: pointer; background: #06c755; color: #fff; }
+    .confirm-warn { background: rgba(250, 82, 82, 0.16); border: 1px solid #fa5252; color: #ff8787; border-radius: 8px; padding: 8px 10px; font-size: 12px; font-weight: bold; margin-bottom: 14px; }
+    .confirm-actions { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; }
+    .btn-cancel { background: #2c3038; color: #ced4da; }
 
     /* 操作ログ＆称号条件モーダル用 */
     .log-list { max-height: 290px; overflow-y: auto; text-align: left; background: #121417; border: 1px solid #2c3038; border-radius: 10px; padding: 8px 10px; margin-bottom: 14px; }
@@ -158,8 +161,15 @@
         <button class="tool-btn tool-btn-del" onclick="undoSelected()">↩ 1つ戻す</button>
       </div>
     </div>
+
+    <!-- 入力バーから離したコマンドバー -->
+    <div class="cmd-bar">
+      <button class="cmd-btn btn-change" onclick="confirmChange()">🔄 ヤギり</button>
+      <button class="cmd-btn btn-settle" onclick="confirmSettle()">決算❤</button>
+    </div>
   </div>
 
+  <!-- 画面最下部は入力操作のみに限定 -->
   <div class="calc-area">
     <div class="target-bar">
       <span id="targetLabel">加算対象: 自分</span>
@@ -185,17 +195,25 @@
     </div>
   </div>
 
-  <div class="cmd-bar">
-    <button class="cmd-btn btn-change" onclick="runChange()">ヤギり</button>
-    <button class="cmd-btn btn-settle" onclick="runSettle()">決算❤</button>
-  </div>
-
   <!-- 通常通知モーダル -->
   <div id="modalBg" class="modal-bg">
     <div class="modal-card">
       <div id="modalTitle" class="modal-title"></div>
       <div id="modalBody" class="modal-body"></div>
       <button class="modal-btn" onclick="closeModal()">OK</button>
+    </div>
+  </div>
+
+  <!-- 誤爆防止確認モーダル（ヤギり・決算共通） -->
+  <div id="confirmModalBg" class="modal-bg" onclick="if(event.target===this) closeConfirmModal()">
+    <div class="modal-card">
+      <div id="confirmTitle" class="modal-title"></div>
+      <div id="confirmBody" class="modal-body"></div>
+      <div id="confirmWarn" class="confirm-warn" style="display:none;"></div>
+      <div class="confirm-actions">
+        <button class="modal-btn btn-cancel" onclick="closeConfirmModal()">やめる</button>
+        <button id="confirmOkBtn" class="modal-btn" onclick="executeConfirmedAction()">確定する</button>
+      </div>
     </div>
   </div>
 
@@ -289,7 +307,7 @@
     const LIFF_ID = "2012565939-nRmRToVG";
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx2Bps0bOXSs6PFAFzMkn_UxA33AS0_wwmzPYatYgZO2pXNV54qWbORf4tnilMXz8Yv/exec";
     const CHART_COLORS = ["#4dabf7", "#ff6b6b", "#51cf66", "#fcc419", "#cc5de8", "#ff922b", "#20c997", "#f06595"];
-    const POLL_INTERVAL_MS = 700; // キャッシュ高速化により0.7秒ごとに同期
+    const POLL_INTERVAL_MS = 700;
 
     function extractUrlChatId() {
       const params = new URLSearchParams(window.location.search);
@@ -318,6 +336,7 @@
     let pollTimer = null;
     let isStoppedRoom = false;
     let isJoining = false;
+    let pendingConfirmCallback = null;
 
     window.onload = async function() {
       try {
@@ -352,7 +371,6 @@
       startFastPolling();
     };
 
-    // 画面を閉じたりトークに戻ったらポーリング停止、戻ったら即再開
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         if (pollTimer) {
@@ -640,6 +658,91 @@
         }
       }
       return result;
+    }
+
+    function getCurrentRoundSum() {
+      const players = latestState.players || {};
+      let sum = 0;
+      let hasAny = false;
+      for (const uid in players) {
+        const cur = Number(players[uid] && players[uid].current) || 0;
+        sum += cur;
+        if (cur !== 0) hasAny = true;
+      }
+      return { sum, hasAny };
+    }
+
+    // ==========================================
+    // 誤爆防止用・確認モーダル制御
+    // ==========================================
+    function openConfirmModal(title, bodyText, warnText, okLabel, okColor, callback) {
+      document.getElementById('confirmTitle').innerText = title;
+      document.getElementById('confirmBody').innerText = bodyText;
+
+      const warnEl = document.getElementById('confirmWarn');
+      if (warnText) {
+        warnEl.innerText = warnText;
+        warnEl.style.display = 'block';
+      } else {
+        warnEl.style.display = 'none';
+      }
+
+      const okBtn = document.getElementById('confirmOkBtn');
+      okBtn.innerText = okLabel;
+      okBtn.style.background = okColor;
+
+      pendingConfirmCallback = callback;
+      document.getElementById('confirmModalBg').style.display = 'flex';
+    }
+
+    function closeConfirmModal() {
+      document.getElementById('confirmModalBg').style.display = 'none';
+      pendingConfirmCallback = null;
+    }
+
+    function executeConfirmedAction() {
+      const fn = pendingConfirmCallback;
+      closeConfirmModal();
+      if (typeof fn === 'function') fn();
+    }
+
+    function confirmChange() {
+      const disp = document.getElementById('inputDisplay');
+      if (disp) disp.blur();
+
+      const nextRound = (Number(latestState.changeCount) || 0) + 1;
+      const { sum, hasAny } = getCurrentRoundSum();
+      const warnText = (hasAny && sum !== 0)
+        ? `⚠️ 現在の合計が 0 ではありません（差額: ${formatSigned(-sum)}）`
+        : '';
+
+      openConfirmModal(
+        `🔄 第${nextRound}戦をヤギりますか？`,
+        `第${nextRound}戦のスコアを確定し、\n第${nextRound + 1}戦へ進みます。`,
+        warnText,
+        'ヤギる（確定）',
+        '#1971c2',
+        runChange
+      );
+    }
+
+    function confirmSettle() {
+      const disp = document.getElementById('inputDisplay');
+      if (disp) disp.blur();
+
+      const { sum, hasAny } = getCurrentRoundSum();
+      const warnText = (hasAny && sum !== 0)
+        ? `⚠️ 現在の合計が 0 ではありません（差額: ${formatSigned(-sum)}）`
+        : '';
+
+      openConfirmModal(
+        '決算しますか？',
+        '決算結果をトークに送信し、\nボードの全数値をリセットします。',
+        warnText,
+        '決算して送信',
+        '#e67700',
+        runSettle
+      );
     }
 
     // ==========================================
@@ -1056,7 +1159,6 @@
         if (res && res.ok && res.state && reqVer === syncVersion) {
           const incomingRev = Number(res.state.rev) || 0;
           const currentRev = Number(latestState.rev) || 0;
-          // サーバー側のリビジョンが進んでいるときだけ再描画（DOM負荷削減）
           if (incomingRev !== currentRev) {
             renderState(res.state);
           }
@@ -1201,7 +1303,6 @@
     }
 
     async function runSettle() {
-      if (!confirm('決算結果をトークに送信し、すべての数値をリセットしますか？')) return;
       syncVersion++;
       const myVer = syncVersion;
       setSyncBusy(true);
