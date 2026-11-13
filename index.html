@@ -23,7 +23,7 @@
     .btn-refresh { background: #2c3038; color: #fff; border: none; border-radius: 6px; padding: 4px 6px; font-size: 10px; font-weight: bold; cursor: pointer; white-space: nowrap; }
     .btn-refresh:active { background: #3d4452; }
 
-    /* 上部ボード（電卓削除分だけテーブルを広く表示） */
+    /* 上部ボード */
     .board { flex: 1; min-height: 0; padding: 8px 10px 6px; display: flex; flex-direction: column; gap: 8px; }
     
     /* 合算チェックカード */
@@ -74,7 +74,7 @@
     .btn-send { background: #06c755; color: #fff; border: none; border-radius: 10px; padding: 0 16px; height: 44px; font-size: 15px; font-weight: bold; cursor: pointer; flex-shrink: 0; }
     .btn-send:active { background: #05a847; }
 
-    /* コマンドバー（ゲーム変更 / 決算） */
+    /* コマンドバー（ヤギり / 決算） */
     .cmd-bar { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; padding: 6px 10px 12px; background: #181b20; border-top: 1px solid #2c3038; flex-shrink: 0; }
     .cmd-btn { border: none; border-radius: 9px; padding: 10px 6px; font-size: 13px; font-weight: bold; color: #fff; cursor: pointer; }
     .cmd-btn:active { opacity: 0.8; }
@@ -289,6 +289,7 @@
     const LIFF_ID = "2012565939-nRmRToVG";
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx2Bps0bOXSs6PFAFzMkn_UxA33AS0_wwmzPYatYgZO2pXNV54qWbORf4tnilMXz8Yv/exec";
     const CHART_COLORS = ["#4dabf7", "#ff6b6b", "#51cf66", "#fcc419", "#cc5de8", "#ff922b", "#20c997", "#f06595"];
+    const POLL_INTERVAL_MS = 700; // キャッシュ高速化により0.7秒ごとに同期
 
     function extractUrlChatId() {
       const params = new URLSearchParams(window.location.search);
@@ -309,12 +310,13 @@
     let myUserName = "自分";
     let selectedUserId = "unknown_user";
     let selectedUserName = "自分";
-    let latestState = { players: {}, order: [], changeCount: 0, logs: [] };
+    let latestState = { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
 
     let isMinus = false;
     let rawDigits = "";
     let syncVersion = 0;
     let pollTimer = null;
+    let isStoppedRoom = false;
     let isJoining = false;
 
     window.onload = async function() {
@@ -350,6 +352,18 @@
       startFastPolling();
     };
 
+    // 画面を閉じたりトークに戻ったらポーリング停止、戻ったら即再開
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        if (pollTimer) {
+          clearTimeout(pollTimer);
+          pollTimer = null;
+        }
+      } else if (document.visibilityState === 'visible' && !isStoppedRoom) {
+        startFastPolling();
+      }
+    });
+
     function setRoomStatus(ok, text) {
       const badge = document.getElementById('roomBadge');
       const dot = document.getElementById('syncDot');
@@ -381,6 +395,7 @@
           userName: name
         });
         if (res && res.stopped) {
+          isStoppedRoom = true;
           if (pollTimer) clearTimeout(pollTimer);
           pollTimer = null;
           setRoomStatus(false, "🛑 停止中");
@@ -406,15 +421,19 @@
     }
 
     async function startFastPolling() {
-      if (pollTimer) clearTimeout(pollTimer);
+      if (pollTimer) {
+        clearTimeout(pollTimer);
+        pollTimer = null;
+      }
+      if (document.visibilityState === 'hidden' || isStoppedRoom) return;
       await fetchState();
-      if (pollTimer !== null) {
-        pollTimer = setTimeout(startFastPolling, 1500);
+      if (document.visibilityState !== 'hidden' && !isStoppedRoom) {
+        pollTimer = setTimeout(startFastPolling, POLL_INTERVAL_MS);
       }
     }
 
     function manualRefresh() {
-      pollTimer = 0;
+      isStoppedRoom = false;
       startFastPolling();
     }
 
@@ -933,7 +952,7 @@
     // メイン画面描画
     // ==========================================
     function renderState(state) {
-      latestState = state || { players: {}, order: [], changeCount: 0, logs: [] };
+      latestState = state || { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
       const changeCount = Number(latestState.changeCount) || 0;
       const showTotalCol = changeCount > 0;
 
@@ -1003,7 +1022,7 @@
         hintEl.innerText = "全員の合計が 0 だといいね";
       } else if (sumCurrent === 0) {
         totalCard.className = "total-card ok";
-        checkTitle.innerText = "合計 0 ";
+        checkTitle.innerText = "合計 0";
         hintEl.innerText = "多分波佐見できてる";
       } else {
         totalCard.className = "total-card ng";
@@ -1028,13 +1047,19 @@
       try {
         const res = await callGasApi({ action: 'getState', chatId: chatId });
         if (res && res.stopped) {
+          isStoppedRoom = true;
           if (pollTimer) clearTimeout(pollTimer);
           pollTimer = null;
           setRoomStatus(false, "🛑 停止中");
           return;
         }
         if (res && res.ok && res.state && reqVer === syncVersion) {
-          renderState(res.state);
+          const incomingRev = Number(res.state.rev) || 0;
+          const currentRev = Number(latestState.rev) || 0;
+          // サーバー側のリビジョンが進んでいるときだけ再描画（DOM負荷削減）
+          if (incomingRev !== currentRev) {
+            renderState(res.state);
+          }
           updateConnectedStatus(res.state.players);
         }
       } catch (e) {
