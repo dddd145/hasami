@@ -26,23 +26,20 @@
     /* 上部ボード */
     .board { flex: 1; min-height: 0; padding: 8px 10px 8px; display: flex; flex-direction: column; gap: 7px; }
     
-    /* 合算チェックカード */
-    .total-card { background: #1e2229; border-radius: 10px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; transition: all 0.15s; flex-shrink: 0; }
+    /* 合算チェックカード＆決算ボタン */
+    .top-status-row { display: flex; gap: 7px; align-items: stretch; flex-shrink: 0; }
+    .total-card { flex: 1; min-width: 0; background: #1e2229; border-radius: 10px; padding: 7px 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #343a46; transition: all 0.15s; }
     .total-card.ok { background: rgba(6, 199, 85, 0.12); border-color: #06c755; }
     .total-card.ng { background: rgba(255, 107, 107, 0.1); border-color: #fa5252; }
     .total-label { font-size: 12px; font-weight: bold; }
-    .total-sub { font-size: 10px; color: #adb5bd; margin-top: 1px; }
-    .total-val { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .total-sub { font-size: 10px; color: #adb5bd; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .total-val { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; margin-left: 6px; flex-shrink: 0; }
     .val-plus { color: #4dabf7; }
     .val-minus { color: #ff6b6b; }
     .val-zero { color: #51cf66; }
 
-    /* コマンドバー（画面最上部に配置して誤タップ完全防止） */
-    .cmd-bar { display: grid; grid-template-columns: 1fr 1.15fr; gap: 8px; flex-shrink: 0; }
-    .cmd-btn { border: none; border-radius: 8px; padding: 8px 6px; font-size: 12px; font-weight: bold; color: #fff; cursor: pointer; }
-    .cmd-btn:active { opacity: 0.8; }
-    .btn-change { background: #1971c2; }
-    .btn-settle { background: #e67700; }
+    .btn-settle-top { background: #e67700; color: #fff; border: none; border-radius: 10px; padding: 0 13px; font-size: 12px; font-weight: bold; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
+    .btn-settle-top:active { opacity: 0.8; }
 
     /* テーブル一覧 */
     .table-box { flex: 1; min-height: 0; background: #1c1f24; border-radius: 10px; border: 1px solid #2c3038; overflow: hidden; display: flex; flex-direction: column; }
@@ -66,20 +63,27 @@
     .tool-btn:active { background: #3d4452; }
     .tool-btn-del { background: rgba(201, 42, 42, 0.25); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.5); }
 
-    /* キーボード入力バー（画面最下部は入力操作のみに限定） */
-    .calc-area { background: #1c1f24; padding: 9px 10px max(12px, env(safe-area-inset-bottom)); border-top: 1px solid #2c3038; flex-shrink: 0; }
+    /* 入力エリア（クイックボタン ＋ 数字入力 ＋ −/＋送信ボタン） */
+    .calc-area { background: #1c1f24; padding: 8px 10px max(12px, env(safe-area-inset-bottom)); border-top: 1px solid #2c3038; flex-shrink: 0; }
     .target-bar { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #06c755; margin-bottom: 6px; font-weight: bold; }
-    .input-row { display: flex; align-items: center; gap: 6px; }
-    .input-box { flex: 1; min-width: 0; display: flex; align-items: center; background: #121417; border: 1px solid #343a46; border-radius: 10px; padding: 4px 8px; transition: border-color 0.15s; }
+    
+    .quick-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-bottom: 7px; }
+    .q-btn { border: none; border-radius: 7px; height: 32px; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; cursor: pointer; }
+    .q-btn:active { opacity: 0.75; transform: scale(0.97); }
+    .q-minus { background: rgba(201, 42, 42, 0.22); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.5); }
+    .q-plus { background: rgba(6, 199, 85, 0.18); color: #69db7c; border: 1px solid rgba(6, 199, 85, 0.45); }
+
+    .input-row { display: flex; align-items: center; gap: 5px; }
+    .input-box { flex: 1; min-width: 0; display: flex; align-items: center; background: #121417; border: 1px solid #343a46; border-radius: 10px; padding: 4px 10px; height: 44px; transition: border-color 0.15s; }
     .input-box:focus-within { border-color: #06c755; }
-    .sign-btn { background: #2c3038; color: #fff; border: none; border-radius: 7px; width: 40px; height: 36px; font-size: 18px; font-weight: bold; margin-right: 6px; cursor: pointer; flex-shrink: 0; }
-    .sign-minus { background: #c92a2a; }
     .input-display { flex: 1; width: 100%; min-width: 0; background: transparent; border: none; outline: none; text-align: right; font-size: 22px; font-weight: bold; color: #fff; font-variant-numeric: tabular-nums; padding: 0; }
     .input-display::placeholder { color: #6c757d; opacity: 1; }
-    .btn-clear { background: #2b303a; color: #adb5bd; border: none; border-radius: 10px; width: 38px; height: 44px; font-size: 13px; font-weight: bold; cursor: pointer; flex-shrink: 0; }
+    .btn-clear { background: #2b303a; color: #adb5bd; border: none; border-radius: 10px; width: 36px; height: 44px; font-size: 13px; font-weight: bold; cursor: pointer; flex-shrink: 0; }
     .btn-clear:active { background: #3d4452; }
-    .btn-send { background: #06c755; color: #fff; border: none; border-radius: 10px; padding: 0 16px; height: 44px; font-size: 15px; font-weight: bold; cursor: pointer; flex-shrink: 0; }
-    .btn-send:active { background: #05a847; }
+    .btn-send-minus { background: #c92a2a; color: #fff; border: none; border-radius: 10px; width: 48px; height: 44px; font-size: 20px; font-weight: 900; cursor: pointer; flex-shrink: 0; }
+    .btn-send-minus:active { background: #a61e1e; }
+    .btn-send-plus { background: #06c755; color: #fff; border: none; border-radius: 10px; width: 48px; height: 44px; font-size: 20px; font-weight: 900; cursor: pointer; flex-shrink: 0; }
+    .btn-send-plus:active { background: #05a847; }
 
     /* モーダル共通 */
     .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; padding: 16px; }
@@ -137,18 +141,15 @@
   </div>
 
   <div class="board">
-    <div id="totalCard" class="total-card">
-      <div>
-        <div id="checkTitle" class="total-label">チェック中</div>
-        <div id="remainHint" class="total-sub">全員の合計が 0 だといいね</div>
+    <div class="top-status-row">
+      <div id="totalCard" class="total-card">
+        <div style="min-width:0;">
+          <div id="checkTitle" class="total-label">チェック中</div>
+          <div id="remainHint" class="total-sub">合計が 0 になると自動で次の戦へ</div>
+        </div>
+        <div id="totalVal" class="total-val val-zero">0</div>
       </div>
-      <div id="totalVal" class="total-val val-zero">0</div>
-    </div>
-
-    <!-- 最上部（チェックカード直下）に移動したコマンドバー -->
-    <div class="cmd-bar">
-      <button class="cmd-btn btn-change" onclick="confirmChange()">🔄 ヤギり</button>
-      <button class="cmd-btn btn-settle" onclick="confirmSettle()">決算❤</button>
+      <button class="btn-settle-top" onclick="confirmSettle()">決算❤</button>
     </div>
 
     <div class="table-box">
@@ -169,21 +170,30 @@
     </div>
   </div>
 
-  <!-- 画面最下部は入力操作のみに限定 -->
+  <!-- 画面下部：クイック入力 ＋ 数字入力 ＋ −/＋送信 -->
   <div class="calc-area">
     <div class="target-bar">
       <span id="targetLabel">加算対象: 自分</span>
       <span onclick="selectSelf()" style="text-decoration:underline; cursor:pointer; color:#adb5bd;">自分に戻す</span>
     </div>
+
+    <div class="quick-row">
+      <button class="q-btn q-minus" onclick="submitQuickAdd(-100)">-100</button>
+      <button class="q-btn q-minus" onclick="submitQuickAdd(-10)">-10</button>
+      <button class="q-btn q-minus" onclick="submitQuickAdd(-5)">-5</button>
+      <button class="q-btn q-plus" onclick="submitQuickAdd(5)">+5</button>
+      <button class="q-btn q-plus" onclick="submitQuickAdd(10)">+10</button>
+      <button class="q-btn q-plus" onclick="submitQuickAdd(100)">+100</button>
+    </div>
+
     <div class="input-row">
       <div class="input-box">
-        <button id="signBtn" class="sign-btn" onclick="toggleSign()">＋</button>
         <input
           id="inputDisplay"
           class="input-display"
           type="text"
           inputmode="numeric"
-          pattern="[0-9\-]*"
+          pattern="[0-9]*"
           placeholder="0"
           autocomplete="off"
           oninput="handleManualInput(this)"
@@ -191,7 +201,8 @@
         >
       </div>
       <button class="btn-clear" onclick="clearInput()">C</button>
-      <button class="btn-send" onclick="submitAdd()">加算</button>
+      <button class="btn-send-minus" onclick="submitAddWithSign(-1)">−</button>
+      <button class="btn-send-plus" onclick="submitAddWithSign(1)">＋</button>
     </div>
   </div>
 
@@ -204,7 +215,7 @@
     </div>
   </div>
 
-  <!-- 誤爆防止確認モーダル（ヤギり・決算共通） -->
+  <!-- 誤爆防止確認モーダル（決算用） -->
   <div id="confirmModalBg" class="modal-bg" onclick="if(event.target===this) closeConfirmModal()">
     <div class="modal-card">
       <div id="confirmTitle" class="modal-title"></div>
@@ -308,6 +319,7 @@
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx2Bps0bOXSs6PFAFzMkn_UxA33AS0_wwmzPYatYgZO2pXNV54qWbORf4tnilMXz8Yv/exec";
     const CHART_COLORS = ["#4dabf7", "#ff6b6b", "#51cf66", "#fcc419", "#cc5de8", "#ff922b", "#20c997", "#f06595"];
     const POLL_INTERVAL_MS = 700;
+    const MAX_HISTORY_ROUNDS = 500;
 
     function extractUrlChatId() {
       const params = new URLSearchParams(window.location.search);
@@ -330,13 +342,13 @@
     let selectedUserName = "自分";
     let latestState = { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
 
-    let isMinus = false;
     let rawDigits = "";
     let syncVersion = 0;
     let pollTimer = null;
     let isStoppedRoom = false;
     let isJoining = false;
     let pendingConfirmCallback = null;
+    let lastAutoCommittedRound = 0;
 
     window.onload = async function() {
       try {
@@ -487,13 +499,15 @@
       const proxyId = "proxy_" + trimmed;
 
       if (!latestState.players[proxyId]) {
+        const histLen = Math.min(Number(latestState.changeCount) || 0, MAX_HISTORY_ROUNDS);
         latestState.players[proxyId] = {
           name: trimmed,
           prev: 0,
           current: 0,
           settled: 0,
-          history: Array(Number(latestState.changeCount) || 0).fill(0),
-          ops: []
+          history: Array(histLen).fill(0),
+          ops: [],
+          lastOps: []
         };
       }
       if (!Array.isArray(latestState.order)) latestState.order = [];
@@ -514,56 +528,27 @@
 
     function updateInputDisplay() {
       const disp = document.getElementById('inputDisplay');
-      const signBtn = document.getElementById('signBtn');
-      if (rawDigits === "") {
-        disp.value = isMinus ? "-" : "";
-      } else {
-        disp.value = (isMinus ? "-" : "") + rawDigits;
-      }
-      signBtn.innerText = isMinus ? "−" : "＋";
-      signBtn.className = isMinus ? "sign-btn sign-minus" : "sign-btn";
+      disp.value = rawDigits;
     }
 
     function handleManualInput(el) {
-      let normalized = el.value
-        .replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
-        .replace(/[－ー−]/g, '-')
-        .replace(/[＋]/g, '+');
-
-      if (normalized.includes('+')) {
-        isMinus = false;
-      } else if (normalized.includes('-')) {
-        if (isMinus && !normalized.startsWith('-')) {
-          isMinus = false;
-        } else {
-          isMinus = true;
-        }
-      } else {
-        isMinus = false;
-      }
-
+      const normalized = el.value
+        .replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
       let digits = normalized.replace(/[^0-9]/g, '').replace(/^0+/, '');
       if (digits.length > 7) digits = digits.slice(0, 7);
       rawDigits = digits;
-
       updateInputDisplay();
     }
 
     function handleInputKeydown(e) {
       if (e.key === 'Enter') {
         e.preventDefault();
-        submitAdd();
+        submitAddWithSign(1);
       }
-    }
-
-    function toggleSign() {
-      isMinus = !isMinus;
-      updateInputDisplay();
     }
 
     function clearInput() {
       rawDigits = "";
-      isMinus = false;
       updateInputDisplay();
     }
 
@@ -613,6 +598,53 @@
       const lastDelta = Number(ops[ops.length - 1]) || 0;
       p.current = total;
       p.prev = total - lastDelta;
+    }
+
+    function areAllLocalCurrentOpsEmpty() {
+      const players = latestState.players || {};
+      for (const uid in players) {
+        const p = players[uid];
+        if ((Number(p.current) || 0) !== 0) return false;
+        if (Array.isArray(p.ops) && p.ops.length > 0) return false;
+      }
+      return true;
+    }
+
+    function checkAndAutoCommitLocal() {
+      const players = latestState.players || {};
+      const uids = Object.keys(players);
+      if (uids.length === 0) return false;
+
+      let sum = 0;
+      let hasNonZero = false;
+      for (let i = 0; i < uids.length; i++) {
+        const cur = Number(players[uids[i]].current) || 0;
+        sum += cur;
+        if (cur !== 0) hasNonZero = true;
+      }
+
+      if (hasNonZero && sum === 0) {
+        const finishedRound = (Number(latestState.changeCount) || 0) + 1;
+        for (let i = 0; i < uids.length; i++) {
+          const p = players[uids[i]];
+          if (!Array.isArray(p.history)) p.history = [];
+          const curVal = Number(p.current) || 0;
+          p.history.push(curVal);
+          if (p.history.length > MAX_HISTORY_ROUNDS) {
+            p.history = p.history.slice(p.history.length - MAX_HISTORY_ROUNDS);
+          }
+          p.settled = (Number(p.settled) || 0) + curVal;
+          p.lastOps = Array.isArray(p.ops) ? p.ops.slice() : (curVal !== 0 ? [curVal] : []);
+          p.ops = [];
+          p.prev = 0;
+          p.current = 0;
+        }
+        latestState.changeCount = finishedRound;
+        lastAutoCommittedRound = finishedRound;
+        pushLocalLog(`🔄 合計0で自動ヤギり（第${finishedRound}戦確定）`);
+        return true;
+      }
+      return false;
     }
 
     function getStreakIcon(p) {
@@ -673,7 +705,7 @@
     }
 
     // ==========================================
-    // 誤爆防止用・確認モーダル制御
+    // 誤爆防止用・決算確認モーダル制御
     // ==========================================
     function openConfirmModal(title, bodyText, warnText, okLabel, okColor, callback) {
       document.getElementById('confirmTitle').innerText = title;
@@ -704,26 +736,6 @@
       const fn = pendingConfirmCallback;
       closeConfirmModal();
       if (typeof fn === 'function') fn();
-    }
-
-    function confirmChange() {
-      const disp = document.getElementById('inputDisplay');
-      if (disp) disp.blur();
-
-      const nextRound = (Number(latestState.changeCount) || 0) + 1;
-      const { sum, hasAny } = getCurrentRoundSum();
-      const warnText = (hasAny && sum !== 0)
-        ? `⚠️ 現在の合計が 0 ではありません（差額: ${formatSigned(-sum)}）`
-        : '';
-
-      openConfirmModal(
-        `🔄 第${nextRound}戦をヤギりますか？`,
-        `第${nextRound}戦のスコアを確定し、\n第${nextRound + 1}戦へ進みます。`,
-        warnText,
-        'ヤギる（確定）',
-        '#1971c2',
-        runChange
-      );
     }
 
     function confirmSettle() {
@@ -857,7 +869,7 @@
     }
 
     // ==========================================
-    // 戦績推移グラフモーダル処理
+    // 戦績推移グラフモーダル処理（多戦数対応：ラベル間引き）
     // ==========================================
     function openGraphModal() {
       document.getElementById('graphModalBg').style.display = 'flex';
@@ -895,22 +907,28 @@
         return;
       }
 
+      const sampleHist = (players[ids[0]] && Array.isArray(players[ids[0]].history)) ? players[ids[0]].history : [];
+      const histCount = sampleHist.length;
+      const roundOffset = Math.max(0, changeCount - histCount);
       const hasOngoing = ids.some(uid => (Number(players[uid] && players[uid].current) || 0) !== 0);
-      const labels = ["開始"];
-      for (let r = 1; r <= changeCount; r++) labels.push(`${r}戦`);
-      if (hasOngoing || changeCount === 0) labels.push("現在");
+
+      const labels = [roundOffset === 0 ? "開始" : `${roundOffset}戦`];
+      for (let r = 1; r <= histCount; r++) labels.push(`${roundOffset + r}戦`);
+      if (hasOngoing || histCount === 0) labels.push("現在");
 
       const series = ids.map((uid, idx) => {
         const p = players[uid] || {};
         const name = (uid === myUserId) ? myUserName : (p.name || '名無し');
         const hist = Array.isArray(p.history) ? p.history : [];
-        const points = [0];
-        let running = 0;
-        for (let r = 0; r < changeCount; r++) {
+        const pastSum = hist.reduce((acc, v) => acc + (Number(v) || 0), 0);
+        let running = (Number(p.settled) || 0) - pastSum;
+        const points = [running];
+
+        for (let r = 0; r < histCount; r++) {
           running += Number(hist[r]) || 0;
           points.push(running);
         }
-        if (hasOngoing || changeCount === 0) {
+        if (hasOngoing || histCount === 0) {
           running += Number(p.current) || 0;
           points.push(running);
         }
@@ -972,9 +990,16 @@
       ctx.fillText("0", padLeft - 5, zeroY);
       ctx.fillText(Math.round(minVal), padLeft - 5, height - padBottom - 4);
 
+      // 戦数が増えても重ならないようX軸ラベルを自動間引き
+      const labelStep = Math.max(1, Math.ceil((labels.length - 1) / 5));
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
       labels.forEach((lbl, i) => {
+        const isFirst = (i === 0);
+        const isLast = (i === labels.length - 1);
+        const isStep = (i % labelStep === 0) && (labels.length - 1 - i >= Math.ceil(labelStep * 0.6));
+        if (!isFirst && !isLast && !isStep) return;
+
         const x = getX(i);
         ctx.strokeStyle = "#23272f";
         ctx.beginPath();
@@ -986,9 +1011,10 @@
         ctx.fillText(lbl, x, height - padBottom + 6);
       });
 
+      const showAllDots = labels.length <= 20;
       series.forEach(s => {
         ctx.strokeStyle = s.color;
-        ctx.lineWidth = 2.2;
+        ctx.lineWidth = labels.length > 35 ? 1.8 : 2.2;
         ctx.beginPath();
         s.points.forEach((v, i) => {
           const x = getX(i);
@@ -999,11 +1025,12 @@
         ctx.stroke();
 
         s.points.forEach((v, i) => {
+          if (!showAllDots && i !== 0 && i !== s.points.length - 1) return;
           const x = getX(i);
           const y = getY(v);
           ctx.fillStyle = s.color;
           ctx.beginPath();
-          ctx.arc(x, y, 3.2, 0, Math.PI * 2);
+          ctx.arc(x, y, 3.0, 0, Math.PI * 2);
           ctx.fill();
         });
       });
@@ -1120,17 +1147,19 @@
       totalEl.className = "total-val " + (sumCurrent > 0 ? "val-plus" : (sumCurrent < 0 ? "val-minus" : "val-zero"));
 
       if (!hasAnyCurrent) {
-        totalCard.className = "total-card";
-        checkTitle.innerText = "チェック中";
-        hintEl.innerText = "全員の合計が 0 だといいね";
-      } else if (sumCurrent === 0) {
-        totalCard.className = "total-card ok";
-        checkTitle.innerText = "合計 0";
-        hintEl.innerText = "多分波佐見できてる";
+        if (changeCount > 0) {
+          totalCard.className = "total-card ok";
+          checkTitle.innerText = `第${changeCount}戦 確定済`;
+          hintEl.innerText = `合計0で自動ヤギり済 ・ 第${changeCount + 1}戦入力待ち`;
+        } else {
+          totalCard.className = "total-card";
+          checkTitle.innerText = "チェック中";
+          hintEl.innerText = "合計が 0 になると自動で次の戦へ";
+        }
       } else {
         totalCard.className = "total-card ng";
         checkTitle.innerText = "ズレてる";
-        hintEl.innerText = `多分ズレてます（差額: ${formatSigned(-sumCurrent)}）`;
+        hintEl.innerText = `あと ${formatSigned(-sumCurrent)} で自動ヤギり`;
       }
 
       if (document.getElementById('logModalBg').style.display === 'flex') {
@@ -1171,25 +1200,37 @@
       }
     }
 
-    async function submitAdd() {
+    function submitAddWithSign(sign) {
       const disp = document.getElementById('inputDisplay');
       if (disp) disp.blur();
 
       const num = rawDigits === "" ? 0 : parseInt(rawDigits, 10);
       if (num === 0) return;
-      const val = isMinus ? -num : num;
       clearInput();
+      applyDelta(sign < 0 ? -num : num);
+    }
 
+    function submitQuickAdd(delta) {
+      const disp = document.getElementById('inputDisplay');
+      if (disp) disp.blur();
+      if (!delta || delta === 0) return;
+      applyDelta(delta);
+    }
+
+    async function applyDelta(val) {
       syncVersion++;
       const myVer = syncVersion;
+      const histLen = Math.min(Number(latestState.changeCount) || 0, MAX_HISTORY_ROUNDS);
+
       if (!latestState.players[selectedUserId]) {
         latestState.players[selectedUserId] = {
           name: selectedUserName,
           prev: 0,
           current: 0,
           settled: 0,
-          history: Array(Number(latestState.changeCount) || 0).fill(0),
-          ops: []
+          history: Array(histLen).fill(0),
+          ops: [],
+          lastOps: []
         };
       }
       if (!Array.isArray(latestState.order)) latestState.order = [];
@@ -1208,6 +1249,9 @@
         ? `${selectedUserName} に ${formatSigned(val)}`
         : `${myUserName} → ${selectedUserName} に ${formatSigned(val)}`;
       pushLocalLog(logMsg);
+
+      // 合計0ならローカルでも即座に自動ヤギり描画
+      checkAndAutoCommitLocal();
       renderState(latestState);
 
       setSyncBusy(true);
@@ -1239,66 +1283,76 @@
         const existingCur = Number(p.current) || 0;
         p.ops = existingCur !== 0 ? [existingCur] : [];
       }
-      if (p.ops.length === 0) return;
 
-      syncVersion++;
-      const myVer = syncVersion;
-      const removed = p.ops.pop();
-      recalcLocalPlayer(p);
-      pushLocalLog(`↩ ${myUserName}が ${selectedUserName} の ${formatSigned(removed)} を取消`);
-      renderState(latestState);
+      if (p.ops.length > 0) {
+        syncVersion++;
+        const myVer = syncVersion;
+        const removed = p.ops.pop();
+        recalcLocalPlayer(p);
+        pushLocalLog(`↩ ${myUserName}が ${selectedUserName} の ${formatSigned(removed)} を取消`);
+        checkAndAutoCommitLocal();
+        renderState(latestState);
 
-      setSyncBusy(true);
-      try {
-        const res = await callGasApi({
-          action: 'undoAdd',
-          chatId: chatId,
-          userId: selectedUserId,
-          actorName: myUserName
-        });
-        if (res.ok && res.state && myVer === syncVersion) {
-          renderState(res.state);
+        setSyncBusy(true);
+        try {
+          const res = await callGasApi({
+            action: 'undoAdd',
+            chatId: chatId,
+            userId: selectedUserId,
+            actorName: myUserName
+          });
+          if (res.ok && res.state && myVer === syncVersion) {
+            renderState(res.state);
+          }
+        } catch (e) {
+          alert("1つ戻す処理に失敗しました");
+        } finally {
+          setSyncBusy(false);
         }
-      } catch (e) {
-        alert("1つ戻す処理に失敗しました");
-      } finally {
-        setSyncBusy(false);
-      }
-    }
+      } else if (
+        (Number(latestState.changeCount) || 0) > 0 &&
+        Array.isArray(p.lastOps) &&
+        p.lastOps.length > 0 &&
+        areAllLocalCurrentOpsEmpty()
+      ) {
+        // 直前の入力で自動ヤギりされた直後の誤操作取り消し
+        syncVersion++;
+        const myVer = syncVersion;
+        const rolledBackRound = Number(latestState.changeCount);
+        latestState.changeCount = rolledBackRound - 1;
 
-    async function runChange() {
-      syncVersion++;
-      const myVer = syncVersion;
-      const finishedRound = (Number(latestState.changeCount) || 0) + 1;
-
-      for (const uid in latestState.players) {
-        const p = latestState.players[uid];
-        if (!Array.isArray(p.history)) p.history = [];
-        const curVal = Number(p.current) || 0;
-        p.history.push(curVal);
-        p.settled = (Number(p.settled) || 0) + curVal;
-        p.ops = [];
-        p.prev = 0;
-        p.current = 0;
-      }
-      latestState.changeCount = finishedRound;
-      pushLocalLog(`🔄 ${myUserName}がヤギり（第${finishedRound}戦確定）`);
-      renderState(latestState);
-
-      setSyncBusy(true);
-      try {
-        const res = await callGasApi({
-          action: 'commitChange',
-          chatId: chatId,
-          actorName: myUserName
-        });
-        if (res.ok && res.state && myVer === syncVersion) {
-          renderState(res.state);
+        for (const pid in latestState.players) {
+          const pl = latestState.players[pid];
+          const lastHist = (Array.isArray(pl.history) && pl.history.length > 0) ? pl.history.pop() : 0;
+          pl.settled = (Number(pl.settled) || 0) - (Number(lastHist) || 0);
+          pl.ops = Array.isArray(pl.lastOps) && pl.lastOps.length > 0
+            ? pl.lastOps.slice()
+            : (lastHist !== 0 ? [lastHist] : []);
+          pl.lastOps = [];
+          recalcLocalPlayer(pl);
         }
-      } catch (e) {
-        alert("通信エラーが発生しました");
-      } finally {
-        setSyncBusy(false);
+
+        const removed = p.ops.pop();
+        recalcLocalPlayer(p);
+        pushLocalLog(`↩ ${myUserName}が自動ヤギり(第${rolledBackRound}戦)を戻し ${selectedUserName} の ${formatSigned(removed)} を取消`);
+        renderState(latestState);
+
+        setSyncBusy(true);
+        try {
+          const res = await callGasApi({
+            action: 'undoAdd',
+            chatId: chatId,
+            userId: selectedUserId,
+            actorName: myUserName
+          });
+          if (res.ok && res.state && myVer === syncVersion) {
+            renderState(res.state);
+          }
+        } catch (e) {
+          alert("1つ戻す処理に失敗しました");
+        } finally {
+          setSyncBusy(false);
+        }
       }
     }
 
