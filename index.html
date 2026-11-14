@@ -66,6 +66,7 @@
     /* 入力エリア（クイックボタン ＋ 数字入力 ＋ −/＋送信ボタン） */
     .calc-area { background: #1c1f24; padding: 8px 10px max(12px, env(safe-area-inset-bottom)); border-top: 1px solid #2c3038; flex-shrink: 0; }
     .target-bar { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #06c755; margin-bottom: 6px; font-weight: bold; }
+    .pending-pill { font-size: 10px; background: rgba(255, 146, 43, 0.2); color: #ffa94d; border: 1px solid rgba(255, 146, 43, 0.5); padding: 1px 6px; border-radius: 8px; margin-left: 5px; font-variant-numeric: tabular-nums; }
     
     .quick-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-bottom: 7px; }
     .q-btn { border: none; border-radius: 7px; height: 32px; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; cursor: pointer; }
@@ -319,6 +320,7 @@
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx2Bps0bOXSs6PFAFzMkn_UxA33AS0_wwmzPYatYgZO2pXNV54qWbORf4tnilMXz8Yv/exec";
     const CHART_COLORS = ["#4dabf7", "#ff6b6b", "#51cf66", "#fcc419", "#cc5de8", "#ff922b", "#20c997", "#f06595"];
     const POLL_INTERVAL_MS = 700;
+    const BATCH_DEBOUNCE_MS = 600;
     const MAX_HISTORY_ROUNDS = 500;
 
     function extractUrlChatId() {
@@ -340,7 +342,15 @@
     let myUserName = "自分";
     let selectedUserId = "unknown_user";
     let selectedUserName = "自分";
+
+    // サーバー確定ベース状態と表示用合成状態
+    let baseState = { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
     let latestState = { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
+
+    // 連打合算用バッファ（案A）
+    let pendingBatch = { userId: null, userName: null, delta: 0, timer: null };
+    let inFlightBatch = null; // 送信中（応答待ち）の合算データ { userId, userName, delta }
+    let inFlightPromise = null;
 
     let rawDigits = "";
     let syncVersion = 0;
@@ -348,7 +358,6 @@
     let isStoppedRoom = false;
     let isJoining = false;
     let pendingConfirmCallback = null;
-    let lastAutoCommittedRound = 0;
 
     window.onload = async function() {
       try {
@@ -378,20 +387,26 @@
         setRoomStatus(false, "LIFF権限エラー");
       }
 
-      renderState(latestState);
+      renderEffectiveState();
       await registerMemberToServer(myUserId, myUserName);
       startFastPolling();
     };
 
+    // 画面を閉じる・裏へ回るときは未送信分を即座にフラッシュ（keepalive付き）
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         if (pollTimer) {
           clearTimeout(pollTimer);
           pollTimer = null;
         }
+        flushPendingBatch({ keepalive: true });
       } else if (document.visibilityState === 'visible' && !isStoppedRoom) {
         startFastPolling();
       }
+    });
+
+    window.addEventListener('pagehide', () => {
+      flushPendingBatch({ keepalive: true });
     });
 
     function setRoomStatus(ok, text) {
@@ -432,7 +447,7 @@
           return;
         }
         if (res && res.ok && res.state) {
-          renderState(res.state);
+          applyServerState(res.state);
           updateConnectedStatus(res.state.players);
         } else {
           setRoomStatus(false, "⚠️ GAS新バージョン未反映");
@@ -446,8 +461,11 @@
 
     function setSyncBusy(busy) {
       const dot = document.getElementById('syncDot');
-      if (busy) dot.classList.add('busy');
-      else dot.classList.remove('busy');
+      if (busy || pendingBatch.delta !== 0 || inFlightBatch) {
+        dot.classList.add('busy');
+      } else {
+        dot.classList.remove('busy');
+      }
     }
 
     async function startFastPolling() {
@@ -462,15 +480,19 @@
       }
     }
 
-    function manualRefresh() {
+    async function manualRefresh() {
       isStoppedRoom = false;
+      await flushPendingBatch();
       startFastPolling();
     }
 
     function updateTargetLabel() {
       const isMe = (selectedUserId === myUserId);
-      document.getElementById('targetLabel').innerText =
-        `加算対象: ${selectedUserName}${isMe ? '（自分）' : '（代理）'}`;
+      const pendingHtml = (pendingBatch.delta !== 0 && pendingBatch.userId === selectedUserId)
+        ? `<span class="pending-pill">合算中 ${formatSigned(pendingBatch.delta)}</span>`
+        : '';
+      document.getElementById('targetLabel').innerHTML =
+        `加算対象: ${escapeHtml(selectedUserName)}${isMe ? '（自分）' : '（代理）'}${pendingHtml}`;
     }
 
     function handleMemberClick(event) {
@@ -481,11 +503,15 @@
       if (uid) selectMember(uid, name || '名無し');
     }
 
+    // 入力対象を切り替えるときは前の人の未送信合算分を即確定して送信
     function selectMember(uid, name) {
+      if (pendingBatch.delta !== 0 && pendingBatch.userId && pendingBatch.userId !== uid) {
+        flushPendingBatch();
+      }
       selectedUserId = uid;
       selectedUserName = name;
       updateTargetLabel();
-      renderState(latestState);
+      renderEffectiveState();
     }
 
     function selectSelf() {
@@ -493,14 +519,15 @@
     }
 
     async function addProxyMember() {
+      await flushPendingBatch();
       const name = prompt("追加するメンバーの名前を入力してください");
       if (!name || !name.trim()) return;
       const trimmed = name.trim();
       const proxyId = "proxy_" + trimmed;
 
-      if (!latestState.players[proxyId]) {
-        const histLen = Math.min(Number(latestState.changeCount) || 0, MAX_HISTORY_ROUNDS);
-        latestState.players[proxyId] = {
+      if (!baseState.players[proxyId]) {
+        const histLen = Math.min(Number(baseState.changeCount) || 0, MAX_HISTORY_ROUNDS);
+        baseState.players[proxyId] = {
           name: trimmed,
           prev: 0,
           current: 0,
@@ -510,19 +537,23 @@
           lastOps: []
         };
       }
-      if (!Array.isArray(latestState.order)) latestState.order = [];
-      if (!latestState.order.includes(proxyId)) latestState.order.push(proxyId);
+      if (!Array.isArray(baseState.order)) baseState.order = [];
+      if (!baseState.order.includes(proxyId)) baseState.order.push(proxyId);
 
       selectMember(proxyId, trimmed);
       await registerMemberToServer(proxyId, trimmed);
     }
 
-    async function callGasApi(payload) {
-      const res = await fetch(GAS_API_URL, {
+    async function callGasApi(payload, options) {
+      const fetchOpts = {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload)
-      });
+      };
+      if (options && options.keepalive) {
+        fetchOpts.keepalive = true;
+      }
+      const res = await fetch(GAS_API_URL, fetchOpts);
       return await res.json();
     }
 
@@ -578,12 +609,6 @@
       return `${hh}:${mm}`;
     }
 
-    function pushLocalLog(text) {
-      if (!Array.isArray(latestState.logs)) latestState.logs = [];
-      latestState.logs.unshift({ time: getNowTimeStr(), text: text });
-      if (latestState.logs.length > 40) latestState.logs = latestState.logs.slice(0, 40);
-    }
-
     function recalcLocalPlayer(p) {
       const ops = Array.isArray(p.ops) ? p.ops : [];
       if (ops.length === 0) {
@@ -600,8 +625,8 @@
       p.prev = total - lastDelta;
     }
 
-    function areAllLocalCurrentOpsEmpty() {
-      const players = latestState.players || {};
+    function areAllLocalCurrentOpsEmpty(st) {
+      const players = st.players || {};
       for (const uid in players) {
         const p = players[uid];
         if ((Number(p.current) || 0) !== 0) return false;
@@ -610,8 +635,8 @@
       return true;
     }
 
-    function checkAndAutoCommitLocal() {
-      const players = latestState.players || {};
+    function checkAndAutoCommitOnState(st) {
+      const players = st.players || {};
       const uids = Object.keys(players);
       if (uids.length === 0) return false;
 
@@ -624,7 +649,7 @@
       }
 
       if (hasNonZero && sum === 0) {
-        const finishedRound = (Number(latestState.changeCount) || 0) + 1;
+        const finishedRound = (Number(st.changeCount) || 0) + 1;
         for (let i = 0; i < uids.length; i++) {
           const p = players[uids[i]];
           if (!Array.isArray(p.history)) p.history = [];
@@ -639,12 +664,192 @@
           p.prev = 0;
           p.current = 0;
         }
-        latestState.changeCount = finishedRound;
-        lastAutoCommittedRound = finishedRound;
-        pushLocalLog(`🔄 合計0で自動ヤギり（第${finishedRound}戦確定）`);
+        st.changeCount = finishedRound;
+        st.logs.unshift({ time: getNowTimeStr(), text: `🔄 合計0で自動ヤギり（第${finishedRound}戦確定）` });
         return true;
       }
       return false;
+    }
+
+    // サーバー基準状態に「通信中バッチ」と「連打合算待ちバッチ」を合成して描画用状態を生成
+    function buildEffectiveState() {
+      const cloned = JSON.parse(JSON.stringify(baseState || { rev: 0, players: {}, order: [], changeCount: 0, logs: [] }));
+      if (!Array.isArray(cloned.logs)) cloned.logs = [];
+      if (!Array.isArray(cloned.order)) cloned.order = [];
+
+      const batches = [];
+      if (inFlightBatch && inFlightBatch.delta !== 0) batches.push(inFlightBatch);
+      if (pendingBatch && pendingBatch.delta !== 0) batches.push(pendingBatch);
+
+      batches.forEach((b, bIdx) => {
+        const uid = b.userId;
+        const name = b.userName || '名無し';
+        const delta = Number(b.delta) || 0;
+        if (!uid || delta === 0) return;
+
+        if (!cloned.players[uid]) {
+          const histLen = Math.min(Number(cloned.changeCount) || 0, MAX_HISTORY_ROUNDS);
+          cloned.players[uid] = {
+            name: name,
+            prev: 0,
+            current: 0,
+            settled: 0,
+            history: Array(histLen).fill(0),
+            ops: [],
+            lastOps: []
+          };
+        }
+        if (!cloned.order.includes(uid)) cloned.order.push(uid);
+
+        const p = cloned.players[uid];
+        if (!Array.isArray(p.ops)) {
+          const existingCur = Number(p.current) || 0;
+          p.ops = existingCur !== 0 ? [existingCur] : [];
+        }
+        p.name = name;
+        p.ops.push(delta);
+        recalcLocalPlayer(p);
+
+        const isPendingOnly = (bIdx === batches.length - 1 && b === pendingBatch);
+        const suffix = isPendingOnly ? '（合算中）' : '';
+        const logMsg = (myUserName === name)
+          ? `${name} に ${formatSigned(delta)}${suffix}`
+          : `${myUserName} → ${name} に ${formatSigned(delta)}${suffix}`;
+        cloned.logs.unshift({ time: getNowTimeStr(), text: logMsg });
+
+        checkAndAutoCommitOnState(cloned);
+      });
+
+      return cloned;
+    }
+
+    function applyServerState(serverState) {
+      baseState = serverState || { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
+      renderEffectiveState();
+    }
+
+    function renderEffectiveState() {
+      latestState = buildEffectiveState();
+      updateTargetLabel();
+      setSyncBusy(false);
+      renderState(latestState);
+    }
+
+    // ==========================================
+    // 連打合算キュー＆即時フラッシュ制御（案A）
+    // ==========================================
+    function queueDelta(delta) {
+      if (!delta || delta === 0) return;
+
+      // 別のユーザーに対する未送信分が残っていたら先に即確定して送信
+      if (pendingBatch.delta !== 0 && pendingBatch.userId && pendingBatch.userId !== selectedUserId) {
+        flushPendingBatch();
+      }
+
+      if (pendingBatch.timer) {
+        clearTimeout(pendingBatch.timer);
+        pendingBatch.timer = null;
+      }
+
+      pendingBatch.userId = selectedUserId;
+      pendingBatch.userName = selectedUserName;
+      pendingBatch.delta += delta;
+
+      // 合算して0になってしまった場合は何も送らずクリア
+      if (pendingBatch.delta === 0) {
+        pendingBatch = { userId: null, userName: null, delta: 0, timer: null };
+        renderEffectiveState();
+        return;
+      }
+
+      renderEffectiveState();
+
+      pendingBatch.timer = setTimeout(() => {
+        flushPendingBatch();
+      }, BATCH_DEBOUNCE_MS);
+    }
+
+    async function flushPendingBatch(options) {
+      if (pendingBatch.timer) {
+        clearTimeout(pendingBatch.timer);
+        pendingBatch.timer = null;
+      }
+
+      if (pendingBatch.delta === 0 || !pendingBatch.userId) {
+        if (inFlightPromise) {
+          try { await inFlightPromise; } catch (e) {}
+        }
+        return;
+      }
+
+      const batchToSend = {
+        userId: pendingBatch.userId,
+        userName: pendingBatch.userName,
+        delta: pendingBatch.delta
+      };
+      pendingBatch = { userId: null, userName: null, delta: 0, timer: null };
+
+      // 既に前の送信が通信中であれば完了を待ってから連続送信
+      if (inFlightPromise) {
+        try { await inFlightPromise; } catch (e) {}
+      }
+
+      inFlightBatch = batchToSend;
+      renderEffectiveState();
+
+      syncVersion++;
+      const myVer = syncVersion;
+
+      const sendTask = (async () => {
+        try {
+          const res = await callGasApi({
+            action: 'addValue',
+            chatId: chatId,
+            userId: batchToSend.userId,
+            userName: batchToSend.userName,
+            actorName: myUserName,
+            value: batchToSend.delta
+          }, options);
+
+          inFlightBatch = null;
+          if (res && res.ok && res.state) {
+            baseState = res.state;
+            updateConnectedStatus(res.state.players);
+          }
+          renderEffectiveState();
+        } catch (e) {
+          inFlightBatch = null;
+          setRoomStatus(false, "⚠️ GAS通信エラー");
+          renderEffectiveState();
+        } finally {
+          if (inFlightPromise === sendTask) {
+            inFlightPromise = null;
+          }
+        }
+      })();
+
+      inFlightPromise = sendTask;
+      await sendTask;
+    }
+
+    function submitAddWithSign(sign) {
+      const disp = document.getElementById('inputDisplay');
+      if (disp) disp.blur();
+
+      const num = rawDigits === "" ? 0 : parseInt(rawDigits, 10);
+      if (num === 0) return;
+      clearInput();
+
+      // 手入力確定時は即座に合算＆送信（待ち時間なし）
+      queueDelta(sign < 0 ? -num : num);
+      flushPendingBatch();
+    }
+
+    function submitQuickAdd(delta) {
+      const disp = document.getElementById('inputDisplay');
+      if (disp) disp.blur();
+      if (!delta || delta === 0) return;
+      queueDelta(delta);
     }
 
     function getStreakIcon(p) {
@@ -738,9 +943,12 @@
       if (typeof fn === 'function') fn();
     }
 
-    function confirmSettle() {
+    async function confirmSettle() {
       const disp = document.getElementById('inputDisplay');
       if (disp) disp.blur();
+
+      // 決算確認前に未送信の連打合算分を必ず確定させる
+      await flushPendingBatch();
 
       const { sum, hasAny } = getCurrentRoundSum();
       const warnText = (hasAny && sum !== 0)
@@ -785,7 +993,8 @@
       }).join('');
     }
 
-    function openManageModal() {
+    async function openManageModal() {
+      await flushPendingBatch();
       renderManageList();
       document.getElementById('manageModalBg').style.display = 'flex';
     }
@@ -805,9 +1014,9 @@
 
       syncVersion++;
       const myVer = syncVersion;
-      latestState.order = ids;
+      baseState.order = ids;
+      renderEffectiveState();
       renderManageList();
-      renderState(latestState);
 
       setSyncBusy(true);
       try {
@@ -818,7 +1027,7 @@
           actorName: myUserName
         });
         if (res && res.ok && res.state && myVer === syncVersion) {
-          renderState(res.state);
+          applyServerState(res.state);
           renderManageList();
         }
       } catch (e) {
@@ -835,18 +1044,18 @@
 
       syncVersion++;
       const myVer = syncVersion;
-      delete latestState.players[uid];
-      latestState.order = (latestState.order || []).filter(id => id !== uid);
+      delete baseState.players[uid];
+      baseState.order = (baseState.order || []).filter(id => id !== uid);
 
       if (selectedUserId === uid) {
         selectedUserId = myUserId;
         selectedUserName = myUserName;
-        updateTargetLabel();
       }
 
-      pushLocalLog(`🗑️ ${myUserName}が ${targetName} を削除`);
+      if (!Array.isArray(baseState.logs)) baseState.logs = [];
+      baseState.logs.unshift({ time: getNowTimeStr(), text: `🗑️ ${myUserName}が ${targetName} を削除` });
+      renderEffectiveState();
       renderManageList();
-      renderState(latestState);
 
       setSyncBusy(true);
       try {
@@ -857,7 +1066,7 @@
           actorName: myUserName
         });
         if (res && res.ok && res.state && myVer === syncVersion) {
-          renderState(res.state);
+          applyServerState(res.state);
           updateConnectedStatus(res.state.players);
           renderManageList();
         }
@@ -990,7 +1199,6 @@
       ctx.fillText("0", padLeft - 5, zeroY);
       ctx.fillText(Math.round(minVal), padLeft - 5, height - padBottom - 4);
 
-      // 戦数が増えても重ならないようX軸ラベルを自動間引き
       const labelStep = Math.max(1, Math.ceil((labels.length - 1) / 5));
       ctx.textAlign = "center";
       ctx.textBaseline = "top";
@@ -1082,8 +1290,7 @@
     // メイン画面描画
     // ==========================================
     function renderState(state) {
-      latestState = state || { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
-      const changeCount = Number(latestState.changeCount) || 0;
+      const changeCount = Number(state.changeCount) || 0;
       const showTotalCol = changeCount > 0;
 
       document.getElementById('roundBadge').innerText = `第${changeCount + 1}戦`;
@@ -1097,7 +1304,7 @@
         headerEl.innerHTML = '<span>プレイヤー</span><span>変更前</span><span>今回</span><span>現在</span>';
       }
 
-      const players = latestState.players || {};
+      const players = state.players || {};
       const orderedIds = getOrderedIds(true);
 
       let sumCurrent = 0;
@@ -1175,7 +1382,6 @@
 
     async function fetchState() {
       const reqVer = syncVersion;
-      setSyncBusy(true);
       try {
         const res = await callGasApi({ action: 'getState', chatId: chatId });
         if (res && res.stopped) {
@@ -1187,96 +1393,31 @@
         }
         if (res && res.ok && res.state && reqVer === syncVersion) {
           const incomingRev = Number(res.state.rev) || 0;
-          const currentRev = Number(latestState.rev) || 0;
-          if (incomingRev !== currentRev) {
-            renderState(res.state);
+          const currentBaseRev = Number(baseState.rev) || 0;
+          if (incomingRev !== currentBaseRev) {
+            baseState = res.state;
+            renderEffectiveState();
           }
           updateConnectedStatus(res.state.players);
         }
       } catch (e) {
         setRoomStatus(false, "⚠️ GAS通信エラー");
-      } finally {
-        setSyncBusy(false);
-      }
-    }
-
-    function submitAddWithSign(sign) {
-      const disp = document.getElementById('inputDisplay');
-      if (disp) disp.blur();
-
-      const num = rawDigits === "" ? 0 : parseInt(rawDigits, 10);
-      if (num === 0) return;
-      clearInput();
-      applyDelta(sign < 0 ? -num : num);
-    }
-
-    function submitQuickAdd(delta) {
-      const disp = document.getElementById('inputDisplay');
-      if (disp) disp.blur();
-      if (!delta || delta === 0) return;
-      applyDelta(delta);
-    }
-
-    async function applyDelta(val) {
-      syncVersion++;
-      const myVer = syncVersion;
-      const histLen = Math.min(Number(latestState.changeCount) || 0, MAX_HISTORY_ROUNDS);
-
-      if (!latestState.players[selectedUserId]) {
-        latestState.players[selectedUserId] = {
-          name: selectedUserName,
-          prev: 0,
-          current: 0,
-          settled: 0,
-          history: Array(histLen).fill(0),
-          ops: [],
-          lastOps: []
-        };
-      }
-      if (!Array.isArray(latestState.order)) latestState.order = [];
-      if (!latestState.order.includes(selectedUserId)) latestState.order.push(selectedUserId);
-
-      const p = latestState.players[selectedUserId];
-      if (!Array.isArray(p.ops)) {
-        const existingCur = Number(p.current) || 0;
-        p.ops = existingCur !== 0 ? [existingCur] : [];
-      }
-      p.name = selectedUserName;
-      p.ops.push(val);
-      recalcLocalPlayer(p);
-
-      const logMsg = (myUserName === selectedUserName)
-        ? `${selectedUserName} に ${formatSigned(val)}`
-        : `${myUserName} → ${selectedUserName} に ${formatSigned(val)}`;
-      pushLocalLog(logMsg);
-
-      // 合計0ならローカルでも即座に自動ヤギり描画
-      checkAndAutoCommitLocal();
-      renderState(latestState);
-
-      setSyncBusy(true);
-      try {
-        const res = await callGasApi({
-          action: 'addValue',
-          chatId: chatId,
-          userId: selectedUserId,
-          userName: selectedUserName,
-          actorName: myUserName,
-          value: val
-        });
-        if (res.ok && res.state && myVer === syncVersion) {
-          renderState(res.state);
-          updateConnectedStatus(res.state.players);
-        }
-      } catch (e) {
-        setRoomStatus(false, "⚠️ GAS通信エラー");
-      } finally {
-        setSyncBusy(false);
       }
     }
 
     async function undoSelected() {
-      const p = latestState.players[selectedUserId];
+      // まだサーバーに送っていない連打合算分がある場合は、サーバー通信なしでその場でキャンセル
+      if (pendingBatch.delta !== 0 && pendingBatch.userId === selectedUserId) {
+        if (pendingBatch.timer) clearTimeout(pendingBatch.timer);
+        pendingBatch = { userId: null, userName: null, delta: 0, timer: null };
+        renderEffectiveState();
+        return;
+      }
+
+      // 他の人の未送信分や通信中バッチがあれば完了を待つ
+      await flushPendingBatch();
+
+      const p = baseState.players[selectedUserId];
       if (!p) return;
 
       if (!Array.isArray(p.ops)) {
@@ -1289,11 +1430,13 @@
         const myVer = syncVersion;
         const removed = p.ops.pop();
         recalcLocalPlayer(p);
-        pushLocalLog(`↩ ${myUserName}が ${selectedUserName} の ${formatSigned(removed)} を取消`);
-        checkAndAutoCommitLocal();
-        renderState(latestState);
+        if (!Array.isArray(baseState.logs)) baseState.logs = [];
+        baseState.logs.unshift({ time: getNowTimeStr(), text: `↩ ${myUserName}が ${selectedUserName} の ${formatSigned(removed)} を取消` });
+        checkAndAutoCommitOnState(baseState);
+        renderEffectiveState();
 
-        setSyncBusy(true);
+        const dot = document.getElementById('syncDot');
+        dot.classList.add('busy');
         try {
           const res = await callGasApi({
             action: 'undoAdd',
@@ -1302,7 +1445,7 @@
             actorName: myUserName
           });
           if (res.ok && res.state && myVer === syncVersion) {
-            renderState(res.state);
+            applyServerState(res.state);
           }
         } catch (e) {
           alert("1つ戻す処理に失敗しました");
@@ -1310,19 +1453,19 @@
           setSyncBusy(false);
         }
       } else if (
-        (Number(latestState.changeCount) || 0) > 0 &&
+        (Number(baseState.changeCount) || 0) > 0 &&
         Array.isArray(p.lastOps) &&
         p.lastOps.length > 0 &&
-        areAllLocalCurrentOpsEmpty()
+        areAllLocalCurrentOpsEmpty(baseState)
       ) {
         // 直前の入力で自動ヤギりされた直後の誤操作取り消し
         syncVersion++;
         const myVer = syncVersion;
-        const rolledBackRound = Number(latestState.changeCount);
-        latestState.changeCount = rolledBackRound - 1;
+        const rolledBackRound = Number(baseState.changeCount);
+        baseState.changeCount = rolledBackRound - 1;
 
-        for (const pid in latestState.players) {
-          const pl = latestState.players[pid];
+        for (const pid in baseState.players) {
+          const pl = baseState.players[pid];
           const lastHist = (Array.isArray(pl.history) && pl.history.length > 0) ? pl.history.pop() : 0;
           pl.settled = (Number(pl.settled) || 0) - (Number(lastHist) || 0);
           pl.ops = Array.isArray(pl.lastOps) && pl.lastOps.length > 0
@@ -1334,10 +1477,12 @@
 
         const removed = p.ops.pop();
         recalcLocalPlayer(p);
-        pushLocalLog(`↩ ${myUserName}が自動ヤギり(第${rolledBackRound}戦)を戻し ${selectedUserName} の ${formatSigned(removed)} を取消`);
-        renderState(latestState);
+        if (!Array.isArray(baseState.logs)) baseState.logs = [];
+        baseState.logs.unshift({ time: getNowTimeStr(), text: `↩ ${myUserName}が自動ヤギり(第${rolledBackRound}戦)を戻し ${selectedUserName} の ${formatSigned(removed)} を取消` });
+        renderEffectiveState();
 
-        setSyncBusy(true);
+        const dot = document.getElementById('syncDot');
+        dot.classList.add('busy');
         try {
           const res = await callGasApi({
             action: 'undoAdd',
@@ -1346,7 +1491,7 @@
             actorName: myUserName
           });
           if (res.ok && res.state && myVer === syncVersion) {
-            renderState(res.state);
+            applyServerState(res.state);
           }
         } catch (e) {
           alert("1つ戻す処理に失敗しました");
@@ -1357,13 +1502,15 @@
     }
 
     async function runSettle() {
+      await flushPendingBatch();
       syncVersion++;
       const myVer = syncVersion;
-      setSyncBusy(true);
+      const dot = document.getElementById('syncDot');
+      dot.classList.add('busy');
       try {
         const res = await callGasApi({ action: 'settle', chatId: chatId });
         if (res.ok && res.state) {
-          if (myVer === syncVersion) renderState(res.state);
+          if (myVer === syncVersion) applyServerState(res.state);
 
           let sentByUser = false;
           if (liff.isInClient() && res.flexMessage) {
