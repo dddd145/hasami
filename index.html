@@ -108,6 +108,29 @@
     .award-name { font-size: 12px; font-weight: bold; color: #ffa94d; margin-bottom: 2px; }
     .award-desc { font-size: 11px; color: #ced4da; line-height: 1.4; }
 
+    /* カスタム称号登録UI */
+    .custom-award-box { background: #181b20; border: 1px solid #343a46; border-radius: 10px; padding: 9px; margin-bottom: 10px; }
+    .custom-award-head { font-size: 12px; font-weight: 800; color: #74c0fc; margin-bottom: 7px; display: flex; justify-content: space-between; align-items: center; }
+    .ca-form { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+    .ca-row { display: flex; gap: 5px; }
+    .ca-select, .ca-input { background: #121417; color: #f1f3f5; border: 1px solid #343a46; border-radius: 7px; padding: 6px 8px; font-size: 12px; outline: none; min-width: 0; }
+    .ca-select { flex: 1.2; }
+    .ca-input-val { flex: 0.9; }
+    .ca-input-title { flex: 1; }
+    .ca-bottom-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 6px; }
+    .ca-checks { display: flex; flex-direction: column; gap: 4px; }
+    .ca-secret-label { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #ced4da; cursor: pointer; user-select: none; }
+    .ca-add-btn { background: #1971c2; color: #fff; border: none; border-radius: 7px; padding: 7px 12px; font-size: 12px; font-weight: bold; cursor: pointer; flex-shrink: 0; }
+    .ca-add-btn:active { opacity: 0.8; }
+    .ca-list { border-top: 1px solid #2c3038; padding-top: 6px; display: flex; flex-direction: column; gap: 5px; }
+    .ca-item { display: flex; justify-content: space-between; align-items: center; gap: 6px; background: #121417; border: 1px solid #262a31; border-radius: 7px; padding: 6px 8px; }
+    .ca-item-info { min-width: 0; flex: 1; }
+    .ca-item-title { font-size: 12px; font-weight: bold; color: #ffa94d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ca-item-mine { color: #69db7c; }
+    .ca-item-cond { font-size: 10px; color: #868e96; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+    .ca-once-badge { font-size: 9px; background: rgba(77, 171, 247, 0.18); color: #74c0fc; border: 1px solid rgba(77, 171, 247, 0.45); padding: 0 4px; border-radius: 4px; margin-left: 4px; vertical-align: middle; }
+    .ca-del-btn { background: rgba(201, 42, 42, 0.25); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.5); border-radius: 5px; padding: 4px 7px; font-size: 10px; font-weight: bold; cursor: pointer; flex-shrink: 0; }
+
     /* 並び替え・削除モーダル用 */
     .manage-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 4px; border-bottom: 1px solid #23272f; gap: 6px; }
     .manage-row:last-child { border-bottom: none; }
@@ -261,11 +284,50 @@
     </div>
   </div>
 
-  <!-- 称号条件一覧モーダル -->
+  <!-- 称号条件一覧＆グループカスタム称号モーダル -->
   <div id="awardModalBg" class="modal-bg" onclick="if(event.target===this) closeAwardModal()">
     <div class="modal-card">
-      <div class="modal-title">🏆 決算時の称号一覧（全11種）</div>
-      <div class="log-list">
+      <div class="modal-title">🏆 決算時の称号一覧</div>
+      <div class="log-list" style="max-height: 360px;">
+        <!-- グループ限定カスタム称号エリア -->
+        <div class="custom-award-box">
+          <div class="custom-award-head">
+            <span>✨ グループ限定カスタム称号</span>
+            <span id="customAwardCount" style="font-size:10px; color:#868e96;">0 / 20</span>
+          </div>
+          <div class="ca-form">
+            <div class="ca-row">
+              <select id="customCondType" class="ca-select" onchange="onCustomCondTypeChange()">
+                <option value="name_includes">名前に文字を含む</option>
+                <option value="rank_last">最下位（ビリ）の人</option>
+                <option value="rank_first">総合1位の人</option>
+                <option value="total_le">最終収支が〇〇以下</option>
+                <option value="total_ge">最終収支が〇〇以上</option>
+                <option value="round_le">1戦で〇〇以下の大敗</option>
+              </select>
+              <input id="customCondValue" class="ca-input ca-input-val" type="text" placeholder="例: 田中">
+            </div>
+            <div class="ca-row">
+              <input id="customAwardTitle" class="ca-input ca-input-title" type="text" maxlength="24" placeholder="つける称号名（例: ジュース奢り）">
+            </div>
+            <div class="ca-bottom-row">
+              <div class="ca-checks">
+                <label class="ca-secret-label">
+                  <input id="customAwardSecret" type="checkbox">
+                  <span>🤫 こっそり仕込む（自分だけ見える）</span>
+                </label>
+                <label class="ca-secret-label">
+                  <input id="customAwardOneTime" type="checkbox">
+                  <span>🎫 決算後に自動削除（1回使い切り）</span>
+                </label>
+              </div>
+              <button class="ca-add-btn" onclick="submitCustomAward()">＋ 登録</button>
+            </div>
+          </div>
+          <div id="customAwardList" class="ca-list"></div>
+        </div>
+
+        <!-- 標準11種 -->
         <div class="award-item">
           <div class="award-name">👑 総合トップ</div>
           <div class="award-desc">トータル収支がプラス（+1以上）の中で1位</div>
@@ -344,12 +406,12 @@
     let selectedUserName = "自分";
 
     // サーバー確定ベース状態と表示用合成状態
-    let baseState = { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
-    let latestState = { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
+    let baseState = { rev: 0, players: {}, order: [], changeCount: 0, logs: [], customAwards: [] };
+    let latestState = { rev: 0, players: {}, order: [], changeCount: 0, logs: [], customAwards: [] };
 
-    // 連打合算用バッファ（案A）
+    // 連打合算用バッファ
     let pendingBatch = { userId: null, userName: null, delta: 0, timer: null };
-    let inFlightBatch = null; // 送信中（応答待ち）の合算データ { userId, userName, delta }
+    let inFlightBatch = null;
     let inFlightPromise = null;
 
     let rawDigits = "";
@@ -359,7 +421,27 @@
     let isJoining = false;
     let pendingConfirmCallback = null;
 
+    // ==========================================
+    // 画面スリープ防止（Wake Lock API）
+    // ==========================================
+    let wakeLockSentinel = null;
+
+    async function requestWakeLock() {
+      if (!('wakeLock' in navigator)) return;
+      if (document.visibilityState !== 'visible') return;
+      if (wakeLockSentinel && !wakeLockSentinel.released) return;
+      try {
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+        wakeLockSentinel.addEventListener('release', () => {
+          wakeLockSentinel = null;
+        });
+      } catch (e) {}
+    }
+
+    document.addEventListener('pointerdown', requestWakeLock, { passive: true });
+
     window.onload = async function() {
+      requestWakeLock();
       try {
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
@@ -392,7 +474,6 @@
       startFastPolling();
     };
 
-    // 画面を閉じる・裏へ回るときは未送信分を即座にフラッシュ（keepalive付き）
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         if (pollTimer) {
@@ -400,8 +481,11 @@
           pollTimer = null;
         }
         flushPendingBatch({ keepalive: true });
-      } else if (document.visibilityState === 'visible' && !isStoppedRoom) {
-        startFastPolling();
+      } else if (document.visibilityState === 'visible') {
+        requestWakeLock();
+        if (!isStoppedRoom) {
+          startFastPolling();
+        }
       }
     });
 
@@ -482,6 +566,7 @@
 
     async function manualRefresh() {
       isStoppedRoom = false;
+      requestWakeLock();
       await flushPendingBatch();
       startFastPolling();
     }
@@ -503,7 +588,6 @@
       if (uid) selectMember(uid, name || '名無し');
     }
 
-    // 入力対象を切り替えるときは前の人の未送信合算分を即確定して送信
     function selectMember(uid, name) {
       if (pendingBatch.delta !== 0 && pendingBatch.userId && pendingBatch.userId !== uid) {
         flushPendingBatch();
@@ -671,11 +755,11 @@
       return false;
     }
 
-    // サーバー基準状態に「通信中バッチ」と「連打合算待ちバッチ」を合成して描画用状態を生成
     function buildEffectiveState() {
-      const cloned = JSON.parse(JSON.stringify(baseState || { rev: 0, players: {}, order: [], changeCount: 0, logs: [] }));
+      const cloned = JSON.parse(JSON.stringify(baseState || { rev: 0, players: {}, order: [], changeCount: 0, logs: [], customAwards: [] }));
       if (!Array.isArray(cloned.logs)) cloned.logs = [];
       if (!Array.isArray(cloned.order)) cloned.order = [];
+      if (!Array.isArray(cloned.customAwards)) cloned.customAwards = [];
 
       const batches = [];
       if (inFlightBatch && inFlightBatch.delta !== 0) batches.push(inFlightBatch);
@@ -724,7 +808,7 @@
     }
 
     function applyServerState(serverState) {
-      baseState = serverState || { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
+      baseState = serverState || { rev: 0, players: {}, order: [], changeCount: 0, logs: [], customAwards: [] };
       renderEffectiveState();
     }
 
@@ -736,12 +820,11 @@
     }
 
     // ==========================================
-    // 連打合算キュー＆即時フラッシュ制御（案A）
+    // 連打合算キュー＆即時フラッシュ制御
     // ==========================================
     function queueDelta(delta) {
       if (!delta || delta === 0) return;
 
-      // 別のユーザーに対する未送信分が残っていたら先に即確定して送信
       if (pendingBatch.delta !== 0 && pendingBatch.userId && pendingBatch.userId !== selectedUserId) {
         flushPendingBatch();
       }
@@ -755,7 +838,6 @@
       pendingBatch.userName = selectedUserName;
       pendingBatch.delta += delta;
 
-      // 合算して0になってしまった場合は何も送らずクリア
       if (pendingBatch.delta === 0) {
         pendingBatch = { userId: null, userName: null, delta: 0, timer: null };
         renderEffectiveState();
@@ -789,7 +871,6 @@
       };
       pendingBatch = { userId: null, userName: null, delta: 0, timer: null };
 
-      // 既に前の送信が通信中であれば完了を待ってから連続送信
       if (inFlightPromise) {
         try { await inFlightPromise; } catch (e) {}
       }
@@ -840,7 +921,6 @@
       if (num === 0) return;
       clearInput();
 
-      // 手入力確定時は即座に合算＆送信（待ち時間なし）
       queueDelta(sign < 0 ? -num : num);
       flushPendingBatch();
     }
@@ -947,7 +1027,6 @@
       const disp = document.getElementById('inputDisplay');
       if (disp) disp.blur();
 
-      // 決算確認前に未送信の連打合算分を必ず確定させる
       await flushPendingBatch();
 
       const { sum, hasAny } = getCurrentRoundSum();
@@ -1078,7 +1157,7 @@
     }
 
     // ==========================================
-    // 戦績推移グラフモーダル処理（多戦数対応：ラベル間引き）
+    // 戦績推移グラフモーダル処理
     // ==========================================
     function openGraphModal() {
       document.getElementById('graphModalBg').style.display = 'flex';
@@ -1252,7 +1331,7 @@
     }
 
     // ==========================================
-    // 操作ログ・称号一覧モーダル
+    // 操作ログ・称号一覧＆カスタム称号モーダル
     // ==========================================
     function renderLogList() {
       const container = document.getElementById('logListBody');
@@ -1278,7 +1357,180 @@
       document.getElementById('logModalBg').style.display = 'none';
     }
 
+    function onCustomCondTypeChange() {
+      const type = document.getElementById('customCondType').value;
+      const valEl = document.getElementById('customCondValue');
+      if (type === 'rank_last' || type === 'rank_first') {
+        valEl.style.display = 'none';
+        valEl.value = '';
+      } else {
+        valEl.style.display = 'block';
+        if (type === 'name_includes') valEl.placeholder = '例: 田中';
+        else if (type === 'total_le') valEl.placeholder = '例: -300';
+        else if (type === 'total_ge') valEl.placeholder = '例: 300';
+        else if (type === 'round_le') valEl.placeholder = '例: -150';
+      }
+    }
+
+    function formatCustomCondDesc(rule) {
+      if (rule.condType === 'name_includes') return `名前に「${rule.condValue}」を含む`;
+      if (rule.condType === 'rank_last') return '最終順位が最下位（ビリ）';
+      if (rule.condType === 'rank_first') return '最終順位が総合1位';
+      if (rule.condType === 'total_le') return `最終収支が ${rule.condValue} 以下`;
+      if (rule.condType === 'total_ge') return `最終収支が +${String(rule.condValue).replace(/^\+/, '')} 以上`;
+      if (rule.condType === 'round_le') return `1戦で ${rule.condValue} 以下の大敗`;
+      return '';
+    }
+
+    function renderCustomAwardsList() {
+      const list = Array.isArray(latestState.customAwards) ? latestState.customAwards : [];
+      document.getElementById('customAwardCount').innerText = `${list.length} / 20`;
+      const container = document.getElementById('customAwardList');
+
+      if (list.length === 0) {
+        container.innerHTML = '<div style="font-size:11px; color:#6c757d; text-align:center; padding:4px 0;">まだグループ専用称号はありません</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(rule => {
+        const isMine = Boolean(rule.creatorId && rule.creatorId === myUserId);
+        const onceBadge = rule.oneTime ? '<span class="ca-once-badge">1回限り</span>' : '';
+
+        if (rule.secret && !isMine) {
+          const who = rule.creatorName ? `${escapeHtml(rule.creatorName)}が仕込んだ` : '';
+          return `
+            <div class="ca-item">
+              <div class="ca-item-info">
+                <div class="ca-item-title">🤫 ${who}シークレット称号${onceBadge}</div>
+                <div class="ca-item-cond">決算時に公開されます（作成者本人のみ確認可能）</div>
+              </div>
+              <button class="ca-del-btn" onclick="deleteCustomAward('${escapeHtml(rule.id)}')">削除</button>
+            </div>
+          `;
+        }
+
+        if (rule.secret && isMine) {
+          return `
+            <div class="ca-item">
+              <div class="ca-item-info">
+                <div class="ca-item-title ca-item-mine">🤫 あなた限定表示：✨ ${escapeHtml(rule.title)}${onceBadge}</div>
+                <div class="ca-item-cond">条件: ${escapeHtml(formatCustomCondDesc(rule))}（他メンバーには非公開）</div>
+              </div>
+              <button class="ca-del-btn" onclick="deleteCustomAward('${escapeHtml(rule.id)}')">削除</button>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="ca-item">
+            <div class="ca-item-info">
+              <div class="ca-item-title">✨ ${escapeHtml(rule.title)}${onceBadge}</div>
+              <div class="ca-item-cond">条件: ${escapeHtml(formatCustomCondDesc(rule))}</div>
+            </div>
+            <button class="ca-del-btn" onclick="deleteCustomAward('${escapeHtml(rule.id)}')">削除</button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function submitCustomAward() {
+      const condType = document.getElementById('customCondType').value;
+      let condValue = document.getElementById('customCondValue').value.trim();
+      const title = document.getElementById('customAwardTitle').value.trim();
+      const secret = document.getElementById('customAwardSecret').checked;
+      const oneTime = document.getElementById('customAwardOneTime').checked;
+
+      // 全角数字・全角マイナスを半角へ正規化（数値条件のとき）
+      if (condType === 'total_le' || condType === 'total_ge' || condType === 'round_le') {
+        condValue = condValue
+          .replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+          .replace(/[－ー—]/g, '-')
+          .replace(/[＋]/g, '+');
+        if (!condValue || isNaN(Number(condValue))) {
+          alert('条件の数値（例: -300）を正しく入力してください');
+          return;
+        }
+      } else if (condType === 'name_includes') {
+        if (!condValue) {
+          alert('対象となる名前の文字を入力してください');
+          return;
+        }
+      }
+
+      if (!title) {
+        alert('つける称号名を入力してください');
+        return;
+      }
+
+      document.getElementById('customCondValue').value = '';
+      document.getElementById('customAwardTitle').value = '';
+      document.getElementById('customAwardSecret').checked = false;
+      document.getElementById('customAwardOneTime').checked = false;
+
+      syncVersion++;
+      const myVer = syncVersion;
+      setSyncBusy(true);
+      try {
+        const res = await callGasApi({
+          action: 'addCustomAward',
+          chatId: chatId,
+          userId: myUserId,
+          actorName: myUserName,
+          condType: condType,
+          condValue: condValue,
+          title: title,
+          secret: secret,
+          oneTime: oneTime
+        });
+        if (res && res.ok && res.state) {
+          if (myVer === syncVersion) {
+            applyServerState(res.state);
+          } else {
+            baseState.customAwards = res.state.customAwards;
+            renderEffectiveState();
+          }
+          renderCustomAwardsList();
+        } else if (res && res.error) {
+          alert(res.error);
+        }
+      } catch (e) {
+        alert('カスタム称号の登録に失敗しました');
+      } finally {
+        setSyncBusy(false);
+      }
+    }
+
+    async function deleteCustomAward(awardId) {
+      if (!confirm('このカスタム称号を削除しますか？')) return;
+      syncVersion++;
+      const myVer = syncVersion;
+      if (Array.isArray(baseState.customAwards)) {
+        baseState.customAwards = baseState.customAwards.filter(item => item && item.id !== awardId);
+      }
+      renderEffectiveState();
+      renderCustomAwardsList();
+
+      setSyncBusy(true);
+      try {
+        const res = await callGasApi({
+          action: 'deleteCustomAward',
+          chatId: chatId,
+          awardId: awardId
+        });
+        if (res && res.ok && res.state && myVer === syncVersion) {
+          applyServerState(res.state);
+          renderCustomAwardsList();
+        }
+      } catch (e) {
+        alert('削除に失敗しました');
+      } finally {
+        setSyncBusy(false);
+      }
+    }
+
     function openAwardModal() {
+      onCustomCondTypeChange();
+      renderCustomAwardsList();
       document.getElementById('awardModalBg').style.display = 'flex';
     }
 
@@ -1378,6 +1630,9 @@
       if (document.getElementById('graphModalBg').style.display === 'flex') {
         drawTrendChart();
       }
+      if (document.getElementById('awardModalBg').style.display === 'flex') {
+        renderCustomAwardsList();
+      }
     }
 
     async function fetchState() {
@@ -1406,7 +1661,6 @@
     }
 
     async function undoSelected() {
-      // まだサーバーに送っていない連打合算分がある場合は、サーバー通信なしでその場でキャンセル
       if (pendingBatch.delta !== 0 && pendingBatch.userId === selectedUserId) {
         if (pendingBatch.timer) clearTimeout(pendingBatch.timer);
         pendingBatch = { userId: null, userName: null, delta: 0, timer: null };
@@ -1414,7 +1668,6 @@
         return;
       }
 
-      // 他の人の未送信分や通信中バッチがあれば完了を待つ
       await flushPendingBatch();
 
       const p = baseState.players[selectedUserId];
@@ -1458,7 +1711,6 @@
         p.lastOps.length > 0 &&
         areAllLocalCurrentOpsEmpty(baseState)
       ) {
-        // 直前の入力で自動ヤギりされた直後の誤操作取り消し
         syncVersion++;
         const myVer = syncVersion;
         const rolledBackRound = Number(baseState.changeCount);
