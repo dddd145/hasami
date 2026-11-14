@@ -41,14 +41,12 @@
     .btn-settle-top { background: #e67700; color: #fff; border: none; border-radius: 10px; padding: 0 13px; font-size: 12px; font-weight: bold; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
     .btn-settle-top:active { opacity: 0.8; }
 
-    /* テーブル一覧 */
+    /* テーブル一覧（プレイヤー / 変更前 / 今回 / 現在[通算] の4列固定） */
     .table-box { flex: 1; min-height: 0; background: #1c1f24; border-radius: 10px; border: 1px solid #2c3038; overflow: hidden; display: flex; flex-direction: column; }
-    .table-header { display: grid; padding: 7px 8px; background: #23272f; font-size: 10px; color: #868e96; font-weight: bold; border-bottom: 1px solid #2c3038; flex-shrink: 0; }
-    .cols-4 { grid-template-columns: 1.5fr 1fr 1fr 1fr; }
-    .cols-5 { grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr; }
+    .table-header { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; padding: 7px 8px; background: #23272f; font-size: 10px; color: #868e96; font-weight: bold; border-bottom: 1px solid #2c3038; flex-shrink: 0; }
     .table-header span:not(:first-child) { text-align: right; }
     .table-body { flex: 1; min-height: 72px; overflow-y: auto; }
-    .member-row { display: grid; align-items: center; height: 40px; padding: 0 8px; border-bottom: 1px solid #262a31; font-size: 13px; cursor: pointer; }
+    .member-row { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; align-items: center; height: 40px; padding: 0 8px; border-bottom: 1px solid #262a31; font-size: 13px; cursor: pointer; }
     .member-row:last-child { border-bottom: none; }
     .member-row.selected { background: rgba(6, 199, 85, 0.15); border-left: 3px solid #06c755; }
     .member-name { font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 3px; }
@@ -185,7 +183,7 @@
     </div>
 
     <div class="table-box">
-      <div id="tableHeader" class="table-header cols-4">
+      <div id="tableHeader" class="table-header">
         <span>プレイヤー</span>
         <span>変更前</span>
         <span>今回</span>
@@ -284,7 +282,7 @@
   <!-- 操作ログモーダル -->
   <div id="logModalBg" class="modal-bg" onclick="if(event.target===this) closeLogModal()">
     <div class="modal-card">
-      <div class="modal-title">📜 操作ログ（新しい順）</div>
+      <div class="modal-title">📜 操作ログ</div>
       <div id="logListBody" class="log-list">
         <div class="empty-msg">まだ操作履歴はありません</div>
       </div>
@@ -300,7 +298,7 @@
         <!-- グループ限定カスタム称号エリア -->
         <div class="custom-award-box">
           <div class="custom-award-head">
-            <span>✨ グループ限定カスタム称号</span>
+            <span>✨ 限定カスタム称号</span>
             <span id="customAwardCount" style="font-size:10px; color:#868e96;">0 / 20</span>
           </div>
           <div class="ca-form">
@@ -331,11 +329,11 @@
               <div class="ca-checks">
                 <label class="ca-secret-label">
                   <input id="customAwardSecret" type="checkbox">
-                  <span>🤫 こっそり仕込む（自分だけ見える）</span>
+                  <span>ほかの人に隠す(自分は見えるよ)</span>
                 </label>
                 <label class="ca-secret-label">
                   <input id="customAwardOneTime" type="checkbox">
-                  <span>🎫 決算後に自動削除（1回使い切り）</span>
+                  <span>決算後に自動削除</span>
                 </label>
               </div>
               <button class="ca-add-btn" onclick="submitCustomAward()">＋ 登録</button>
@@ -1595,7 +1593,7 @@
       const container = document.getElementById('customAwardList');
 
       if (list.length === 0) {
-        container.innerHTML = '<div style="font-size:11px; color:#6c757d; text-align:center; padding:4px 0;">まだグループ専用称号はありません</div>';
+        container.innerHTML = '<div style="font-size:11px; color:#6c757d; text-align:center; padding:4px 0;">なにもない</div>';
         return;
       }
 
@@ -1604,12 +1602,12 @@
         const onceBadge = rule.oneTime ? '<span class="ca-once-badge">1回限り</span>' : '';
 
         if (rule.secret && !isMine) {
-          const who = rule.creatorName ? `${escapeHtml(rule.creatorName)}が仕込んだ` : '';
+          const who = rule.creatorName ? `${escapeHtml(rule.creatorName)}の` : '誰かの';
           return `
             <div class="ca-item">
               <div class="ca-item-info">
-                <div class="ca-item-title">🤫 ${who}シークレット称号${onceBadge}</div>
-                <div class="ca-item-cond">決算時に公開されます（作成者本人のみ確認可能）</div>
+                <div class="ca-item-title">${who}秘密称号${onceBadge}</div>
+                <div class="ca-item-cond">決算後にわかるよ</div>
               </div>
               <button class="ca-del-btn" onclick="deleteCustomAward('${escapeHtml(rule.id)}')">削除</button>
             </div>
@@ -1620,8 +1618,8 @@
           return `
             <div class="ca-item">
               <div class="ca-item-info">
-                <div class="ca-item-title ca-item-mine">🤫 あなた限定表示：✨ ${escapeHtml(rule.title)}${onceBadge}</div>
-                <div class="ca-item-cond">${formatRuleCondLines(rule)}<br>（他メンバーには非公開）</div>
+                <div class="ca-item-title ca-item-mine">${escapeHtml(rule.title)}${onceBadge}</div>
+                <div class="ca-item-cond">${formatRuleCondLines(rule)}<br>(ほかの人には非公開)</div>
               </div>
               <button class="ca-del-btn" onclick="deleteCustomAward('${escapeHtml(rule.id)}')">削除</button>
             </div>
@@ -1643,7 +1641,7 @@
     async function submitCustomAward() {
       const title = document.getElementById('customAwardTitle').value.trim();
       if (!title) {
-        alert('つける称号名を入力してください');
+        alert('称号名を入力してください');
         return;
       }
 
@@ -1745,22 +1743,12 @@
     }
 
     // ==========================================
-    // メイン画面描画
+    // メイン画面描画（「現在」列に「通算スコア」を表示）
     // ==========================================
     function renderState(state) {
       const changeCount = Number(state.changeCount) || 0;
-      const showTotalCol = changeCount > 0;
 
       document.getElementById('roundBadge').innerText = `第${changeCount + 1}戦`;
-
-      const headerEl = document.getElementById('tableHeader');
-      if (showTotalCol) {
-        headerEl.className = 'table-header cols-5';
-        headerEl.innerHTML = '<span>プレイヤー</span><span>変更前</span><span>今回</span><span>現在</span><span>通算</span>';
-      } else {
-        headerEl.className = 'table-header cols-4';
-        headerEl.innerHTML = '<span>プレイヤー</span><span>変更前</span><span>今回</span><span>現在</span>';
-      }
 
       const players = state.players || {};
       const orderedIds = getOrderedIds(true);
@@ -1777,7 +1765,9 @@
         const cur = p ? (Number(p.current) || 0) : 0;
         const settled = p ? (Number(p.settled) || 0) : 0;
 
+        // 変更前＝直前の通算、今回＝直前の増減、現在＝現在の通算
         const diff = cur - prev;
+        const prevTotal = settled + prev;
         const total = settled + cur;
 
         sumCurrent += cur;
@@ -1786,18 +1776,13 @@
         const isSelected = (uid === selectedUserId) ? 'selected' : '';
         const meBadge = (uid === myUserId) ? '<span class="me-tag">自分</span>' : '';
         const streakBadge = getStreakIcon(p);
-        const colClass = showTotalCol ? 'cols-5' : 'cols-4';
-        const totalCell = showTotalCol
-          ? `<div class="col-num ${colorClass(total)}">${formatSigned(total)}</div>`
-          : '';
 
         html += `
-          <div class="member-row ${colClass} ${isSelected}" data-uid="${escapeHtml(uid)}" data-name="${escapeHtml(name)}">
+          <div class="member-row ${isSelected}" data-uid="${escapeHtml(uid)}" data-name="${escapeHtml(name)}">
             <div class="member-name">${escapeHtml(name)}${streakBadge}${meBadge}</div>
-            <div class="col-sub">${formatSigned(prev)}</div>
+            <div class="col-sub">${formatSigned(prevTotal)}</div>
             <div class="col-num ${colorClass(diff)}">${diff !== 0 ? formatSigned(diff) : '0'}</div>
-            <div class="col-num ${colorClass(cur)}">${formatSigned(cur)}</div>
-            ${totalCell}
+            <div class="col-num ${colorClass(total)}">${formatSigned(total)}</div>
           </div>`;
       });
 
@@ -1814,8 +1799,8 @@
       if (!hasAnyCurrent) {
         if (changeCount > 0) {
           totalCard.className = "total-card ok";
-          checkTitle.innerText = `第${changeCount}戦 確定済`;
-          hintEl.innerText = `合計0で自動ヤギり済 ・ 第${changeCount + 1}戦入力待ち`;
+          checkTitle.innerText = "多分ズレてない";
+          hintEl.innerText = "多分ズレてないから次いこ";
         } else {
           totalCard.className = "total-card";
           checkTitle.innerText = "チェック中";
@@ -1824,7 +1809,7 @@
       } else {
         totalCard.className = "total-card ng";
         checkTitle.innerText = "ズレてる";
-        hintEl.innerText = `あと ${formatSigned(-sumCurrent)} で自動ヤギり`;
+        hintEl.innerText = "どうせkairiか凌佑やろ";
       }
 
       if (document.getElementById('logModalBg').style.display === 'flex') {
