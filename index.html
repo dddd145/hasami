@@ -41,7 +41,7 @@
     .btn-settle-top { background: #e67700; color: #fff; border: none; border-radius: 10px; padding: 0 13px; font-size: 12px; font-weight: bold; cursor: pointer; flex-shrink: 0; white-space: nowrap; }
     .btn-settle-top:active { opacity: 0.8; }
 
-    /* テーブル一覧（プレイヤー / 変更前 / 今回 / 現在[通算] の4列固定） */
+    /* テーブル一覧（プレイヤー / 変更前 / 今回 / 現在 の4列固定） */
     .table-box { flex: 1; min-height: 0; background: #1c1f24; border-radius: 10px; border: 1px solid #2c3038; overflow: hidden; display: flex; flex-direction: column; }
     .table-header { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; padding: 7px 8px; background: #23272f; font-size: 10px; color: #868e96; font-weight: bold; border-bottom: 1px solid #2c3038; flex-shrink: 0; }
     .table-header span:not(:first-child) { text-align: right; }
@@ -66,7 +66,7 @@
     .target-bar { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #06c755; margin-bottom: 6px; font-weight: bold; }
     .pending-pill { font-size: 10px; background: rgba(255, 146, 43, 0.2); color: #ffa94d; border: 1px solid rgba(255, 146, 43, 0.5); padding: 1px 6px; border-radius: 8px; margin-left: 5px; font-variant-numeric: tabular-nums; }
     
-    /* 符号切り替えタブ（案2） */
+    /* 符号切り替えタブ */
     .sign-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #121417; padding: 3px; border-radius: 9px; border: 1px solid #2c3038; margin-bottom: 6px; }
     .sign-tab { border: none; border-radius: 7px; height: 30px; font-size: 12px; font-weight: 800; cursor: pointer; background: transparent; color: #868e96; transition: all 0.12s; }
     .sign-tab.active-minus { background: #c92a2a; color: #fff; }
@@ -915,7 +915,6 @@
       return '';
     }
 
-    // 見えない参加者を防ぐため、全プレイヤーを表示対象にする
     function getOrderedIds(includeLocalSelected) {
       const players = latestState.players || {};
       const order = Array.isArray(latestState.order) ? latestState.order : [];
@@ -1334,7 +1333,8 @@
     }
 
     // ==========================================
-    // メイン画面描画（「現在」列に「通算スコア」を表示）
+    // メイン画面描画
+    // 変更前＝開始前通算(settled) / 今回＝今戦計(cur) / 現在＝通算(settled + cur)
     // ==========================================
     function renderState(state) {
       const changeCount = Number(state.changeCount) || 0;
@@ -1352,13 +1352,8 @@
         if (!uid) return;
         const p = players[uid];
         const name = (uid === myUserId) ? myUserName : ((p && p.name) || (uid === selectedUserId ? selectedUserName : '名無し'));
-        const prev = p ? (Number(p.prev) || 0) : 0;
         const cur = p ? (Number(p.current) || 0) : 0;
         const settled = p ? (Number(p.settled) || 0) : 0;
-
-        // 変更前＝直前の通算、今回＝直前の増減、現在＝現在の通算
-        const diff = cur - prev;
-        const prevTotal = settled + prev;
         const total = settled + cur;
 
         sumCurrent += cur;
@@ -1371,8 +1366,8 @@
         html += `
           <div class="member-row ${isSelected}" data-uid="${escapeHtml(uid)}" data-name="${escapeHtml(name)}">
             <div class="member-name">${escapeHtml(name)}${streakBadge}${meBadge}</div>
-            <div class="col-sub">${formatSigned(prevTotal)}</div>
-            <div class="col-num ${colorClass(diff)}">${diff !== 0 ? formatSigned(diff) : '0'}</div>
+            <div class="col-sub">${formatSigned(settled)}</div>
+            <div class="col-num ${colorClass(cur)}">${cur !== 0 ? formatSigned(cur) : '0'}</div>
             <div class="col-num ${colorClass(total)}">${formatSigned(total)}</div>
           </div>`;
       });
