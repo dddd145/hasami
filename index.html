@@ -61,16 +61,23 @@
     .tool-btn:active { background: #3d4452; }
     .tool-btn-del { background: rgba(201, 42, 42, 0.25); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.5); }
 
-    /* 入力エリア（クイックボタン ＋ 数字入力 ＋ −/＋送信ボタン） */
+    /* 入力エリア（符号切り替えタブ ＋ 4大クイックボタン ＋ 数字入力） */
     .calc-area { background: #1c1f24; padding: 8px 10px max(12px, env(safe-area-inset-bottom)); border-top: 1px solid #2c3038; flex-shrink: 0; }
     .target-bar { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #06c755; margin-bottom: 6px; font-weight: bold; }
     .pending-pill { font-size: 10px; background: rgba(255, 146, 43, 0.2); color: #ffa94d; border: 1px solid rgba(255, 146, 43, 0.5); padding: 1px 6px; border-radius: 8px; margin-left: 5px; font-variant-numeric: tabular-nums; }
     
-    .quick-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-bottom: 7px; }
-    .q-btn { border: none; border-radius: 7px; height: 32px; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; cursor: pointer; }
+    /* 符号切り替えタブ（案2） */
+    .sign-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #121417; padding: 3px; border-radius: 9px; border: 1px solid #2c3038; margin-bottom: 6px; }
+    .sign-tab { border: none; border-radius: 7px; height: 30px; font-size: 12px; font-weight: 800; cursor: pointer; background: transparent; color: #868e96; transition: all 0.12s; }
+    .sign-tab.active-minus { background: #c92a2a; color: #fff; }
+    .sign-tab.active-plus { background: #06c755; color: #fff; }
+
+    /* 4つの大きなクイックボタン */
+    .quick-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 7px; }
+    .q-btn { border: none; border-radius: 8px; height: 38px; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; cursor: pointer; }
     .q-btn:active { opacity: 0.75; transform: scale(0.97); }
-    .q-minus { background: rgba(201, 42, 42, 0.22); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.5); }
-    .q-plus { background: rgba(6, 199, 85, 0.18); color: #69db7c; border: 1px solid rgba(6, 199, 85, 0.45); }
+    .q-minus { background: rgba(201, 42, 42, 0.24); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.55); }
+    .q-plus { background: rgba(6, 199, 85, 0.2); color: #69db7c; border: 1px solid rgba(6, 199, 85, 0.5); }
 
     .input-row { display: flex; align-items: center; gap: 5px; }
     .input-box { flex: 1; min-width: 0; display: flex; align-items: center; background: #121417; border: 1px solid #343a46; border-radius: 10px; padding: 4px 10px; height: 44px; transition: border-color 0.15s; }
@@ -100,42 +107,13 @@
     .log-item:last-child { border-bottom: none; }
     .log-time { color: #868e96; font-size: 11px; font-variant-numeric: tabular-nums; flex-shrink: 0; }
     .log-text { color: #f1f3f5; word-break: break-all; }
+    .log-divider { text-align: center; font-size: 11px; font-weight: 800; color: #ffa94d; padding: 8px 0; border-bottom: 1px solid #23272f; letter-spacing: 0.5px; }
+    .log-divider:last-child { border-bottom: none; }
 
     .award-item { padding: 7px 0; border-bottom: 1px solid #23272f; }
     .award-item:last-child { border-bottom: none; }
     .award-name { font-size: 12px; font-weight: bold; color: #ffa94d; margin-bottom: 2px; }
     .award-desc { font-size: 11px; color: #ced4da; line-height: 1.4; }
-
-    /* カスタム称号登録UI（見切れ解消・AND2条件対応） */
-    .custom-award-box { background: #181b20; border: 1px solid #343a46; border-radius: 10px; padding: 10px; margin-bottom: 12px; }
-    .custom-award-head { font-size: 12px; font-weight: 800; color: #74c0fc; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-    .ca-form { display: flex; flex-direction: column; gap: 7px; margin-bottom: 10px; }
-    .ca-cond-block { background: #121417; border: 1px solid #2c3038; border-radius: 8px; padding: 7px; display: flex; flex-direction: column; gap: 5px; }
-    .ca-cond-label { font-size: 10px; font-weight: bold; color: #adb5bd; display: flex; justify-content: space-between; align-items: center; }
-    .ca-and-pill { background: rgba(25, 113, 194, 0.25); color: #74c0fc; border: 1px solid rgba(77, 171, 247, 0.5); padding: 1px 6px; border-radius: 4px; font-size: 10px; }
-    .ca-remove-cond2 { background: transparent; border: none; color: #ff8787; font-size: 10px; font-weight: bold; cursor: pointer; text-decoration: underline; }
-    .ca-select, .ca-input { width: 100%; background: #1c1f24; color: #f1f3f5; border: 1px solid #343a46; border-radius: 7px; padding: 7px 8px; font-size: 12px; outline: none; }
-    .ca-select:focus, .ca-input:focus { border-color: #4dabf7; }
-    .ca-range-row { display: flex; align-items: center; gap: 5px; }
-    .ca-range-row .ca-input { flex: 1; min-width: 0; }
-    .ca-range-sep { font-size: 12px; color: #adb5bd; flex-shrink: 0; }
-    .ca-add-cond2-btn { align-self: flex-start; background: #23272f; color: #74c0fc; border: 1px dashed rgba(77, 171, 247, 0.5); border-radius: 6px; padding: 4px 9px; font-size: 11px; font-weight: bold; cursor: pointer; }
-    .ca-add-cond2-btn:active { opacity: 0.75; }
-    .ca-bottom-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 6px; margin-top: 2px; }
-    .ca-checks { display: flex; flex-direction: column; gap: 5px; }
-    .ca-secret-label { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #ced4da; cursor: pointer; user-select: none; line-height: 1.3; }
-    .ca-add-btn { background: #1971c2; color: #fff; border: none; border-radius: 7px; padding: 8px 13px; font-size: 12px; font-weight: bold; cursor: pointer; flex-shrink: 0; }
-    .ca-add-btn:active { opacity: 0.8; }
-
-    /* 登録済みリスト（文字見切れなし・完全折り返し表示） */
-    .ca-list { border-top: 1px solid #2c3038; padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
-    .ca-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; background: #121417; border: 1px solid #2c3038; border-radius: 8px; padding: 8px 9px; }
-    .ca-item-info { min-width: 0; flex: 1; }
-    .ca-item-title { font-size: 12px; font-weight: bold; color: #ffa94d; white-space: normal; word-break: break-word; line-height: 1.45; }
-    .ca-item-mine { color: #69db7c; }
-    .ca-item-cond { font-size: 11px; color: #adb5bd; white-space: normal; word-break: break-word; line-height: 1.45; margin-top: 3px; }
-    .ca-once-badge { display: inline-block; font-size: 9px; background: rgba(77, 171, 247, 0.18); color: #74c0fc; border: 1px solid rgba(77, 171, 247, 0.45); padding: 0 5px; border-radius: 4px; margin-left: 5px; vertical-align: middle; }
-    .ca-del-btn { background: rgba(201, 42, 42, 0.25); color: #ff8787; border: 1px solid rgba(201, 42, 42, 0.5); border-radius: 6px; padding: 5px 8px; font-size: 11px; font-weight: bold; cursor: pointer; flex-shrink: 0; margin-top: 1px; }
 
     /* 並び替え・削除モーダル用 */
     .manage-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 4px; border-bottom: 1px solid #23272f; gap: 6px; }
@@ -194,26 +172,29 @@
       </div>
       <div class="board-tools">
         <button class="tool-btn" onclick="addProxyMember()">＋ 追加</button>
-        <button class="tool-btn" onclick="openManageModal()">↕️ 席順・削除</button>
-        <button class="tool-btn tool-btn-del" onclick="undoSelected()">↩ 1つ戻す</button>
+        <button class="tool-btn" onclick="openManageModal()">⇅ 席順・削除</button>
+        <button class="tool-btn tool-btn-del" onclick="undoSelected()">↩️ 1つ戻す</button>
       </div>
     </div>
   </div>
 
-  <!-- 画面下部：クイック入力 ＋ 数字入力 ＋ −/＋送信 -->
+  <!-- 画面下部：符号切り替えタブ ＋ 4大クイックボタン ＋ 数字入力 -->
   <div class="calc-area">
     <div class="target-bar">
       <span id="targetLabel">加算対象: 自分</span>
       <span onclick="selectSelf()" style="text-decoration:underline; cursor:pointer; color:#adb5bd;">自分に戻す</span>
     </div>
 
+    <div class="sign-tabs">
+      <button type="button" id="tabMinus" class="sign-tab active-minus" onclick="setQuickSign(-1)">マイナス（−）</button>
+      <button type="button" id="tabPlus" class="sign-tab" onclick="setQuickSign(1)">プラス（＋）</button>
+    </div>
+
     <div class="quick-row">
-      <button class="q-btn q-minus" onclick="submitQuickAdd(-100)">-100</button>
-      <button class="q-btn q-minus" onclick="submitQuickAdd(-10)">-10</button>
-      <button class="q-btn q-minus" onclick="submitQuickAdd(-5)">-5</button>
-      <button class="q-btn q-plus" onclick="submitQuickAdd(5)">+5</button>
-      <button class="q-btn q-plus" onclick="submitQuickAdd(10)">+10</button>
-      <button class="q-btn q-plus" onclick="submitQuickAdd(100)">+100</button>
+      <button type="button" id="qBtn0" class="q-btn q-minus" onclick="submitQuickMag(5)">-5</button>
+      <button type="button" id="qBtn1" class="q-btn q-minus" onclick="submitQuickMag(10)">-10</button>
+      <button type="button" id="qBtn2" class="q-btn q-minus" onclick="submitQuickMag(50)">-50</button>
+      <button type="button" id="qBtn3" class="q-btn q-minus" onclick="submitQuickMag(100)">-100</button>
     </div>
 
     <div class="input-row">
@@ -261,7 +242,7 @@
   <!-- メンバー並び替え・削除モーダル -->
   <div id="manageModalBg" class="modal-bg" onclick="if(event.target===this) closeManageModal()">
     <div class="modal-card">
-      <div class="modal-title">↕️ 席順の並び替え・メンバー削除</div>
+      <div class="modal-title">⇅ 席順の並び替え・メンバー削除</div>
       <div id="manageListBody" class="log-list"></div>
       <button class="modal-btn" onclick="closeManageModal()">完了</button>
     </div>
@@ -290,59 +271,11 @@
     </div>
   </div>
 
-  <!-- 称号条件一覧＆グループカスタム称号モーダル -->
+  <!-- 称号条件一覧モーダル（標準11種のみ） -->
   <div id="awardModalBg" class="modal-bg" onclick="if(event.target===this) closeAwardModal()">
     <div class="modal-card">
       <div class="modal-title">🏆 決算時の称号一覧</div>
       <div class="log-list">
-        <!-- グループ限定カスタム称号エリア -->
-        <div class="custom-award-box">
-          <div class="custom-award-head">
-            <span>✨ 限定カスタム称号</span>
-            <span id="customAwardCount" style="font-size:10px; color:#868e96;">0 / 20</span>
-          </div>
-          <div class="ca-form">
-            <!-- 条件1 -->
-            <div class="ca-cond-block">
-              <div class="ca-cond-label"><span>条件 1</span></div>
-              <select id="customCond1Type" class="ca-select" onchange="onCustomCondChange(1)"></select>
-              <div id="customCond1Inputs"></div>
-            </div>
-
-            <!-- 条件2追加ボタン -->
-            <button type="button" id="addCond2Btn" class="ca-add-cond2-btn" onclick="toggleCond2(true)">＋ 条件2を追加（AND掛け合わせ）</button>
-
-            <!-- 条件2（AND） -->
-            <div id="customCond2Block" class="ca-cond-block" style="display:none;">
-              <div class="ca-cond-label">
-                <span class="ca-and-pill">かつ（AND）条件 2</span>
-                <button type="button" class="ca-remove-cond2" onclick="toggleCond2(false)">× 条件2を外す</button>
-              </div>
-              <select id="customCond2Type" class="ca-select" onchange="onCustomCondChange(2)"></select>
-              <div id="customCond2Inputs"></div>
-            </div>
-
-            <!-- 称号名入力 -->
-            <input id="customAwardTitle" class="ca-input" type="text" maxlength="28" placeholder="つける称号名（例: 序盤だけ番長）">
-
-            <div class="ca-bottom-row">
-              <div class="ca-checks">
-                <label class="ca-secret-label">
-                  <input id="customAwardSecret" type="checkbox">
-                  <span>ほかの人に隠す(自分は見えるよ)</span>
-                </label>
-                <label class="ca-secret-label">
-                  <input id="customAwardOneTime" type="checkbox">
-                  <span>決算後に自動削除</span>
-                </label>
-              </div>
-              <button class="ca-add-btn" onclick="submitCustomAward()">＋ 登録</button>
-            </div>
-          </div>
-          <div id="customAwardList" class="ca-list"></div>
-        </div>
-
-        <!-- 標準11種 -->
         <div class="award-item">
           <div class="award-name">👑 総合トップ</div>
           <div class="award-desc">トータル収支がプラス（+1以上）の中で1位</div>
@@ -360,11 +293,11 @@
           <div class="award-desc">全戦を通じて1戦あたりのマイナス幅が最大</div>
         </div>
         <div class="award-item">
-          <div class="award-name">🚀 大逆転賞</div>
+          <div class="award-name">🔄 大逆転賞</div>
           <div class="award-desc">途中でマイナスになりつつ、最終的にトータルプラス（2戦以上）</div>
         </div>
         <div class="award-item">
-          <div class="award-name">📉 天国から地獄</div>
+          <div class="award-name">🎢 天国から地獄</div>
           <div class="award-desc">途中でプラスになりつつ、最終的にトータルマイナス（2戦以上）</div>
         </div>
         <div class="award-item">
@@ -376,11 +309,11 @@
           <div class="award-desc">第1戦から最終戦まで常に累計1位を譲らず優勝（2戦以上）</div>
         </div>
         <div class="award-item">
-          <div class="award-name">🎢 ジェットコースター</div>
+          <div class="award-name">🎡 ジェットコースター</div>
           <div class="award-desc">プラスとマイナスの両方があり、1戦の最高点と最低点の振り幅が最大（2戦以上）</div>
         </div>
         <div class="award-item">
-          <div class="award-name">🧱 鉄壁の安定感</div>
+          <div class="award-name">🛡️ 鉄壁の安定感</div>
           <div class="award-desc">1戦ごとのスコアのブレ幅（最高点と最低点の差）が最小（2戦以上）</div>
         </div>
         <div class="award-item">
@@ -396,9 +329,10 @@
     const LIFF_ID = "2012565939-nRmRToVG";
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx2Bps0bOXSs6PFAFzMkn_UxA33AS0_wwmzPYatYgZO2pXNV54qWbORf4tnilMXz8Yv/exec";
     const CHART_COLORS = ["#4dabf7", "#ff6b6b", "#51cf66", "#fcc419", "#cc5de8", "#ff922b", "#20c997", "#f06595"];
-    const POLL_INTERVAL_MS = 700;
+    const POLL_INTERVAL_MS = 2000;
     const BATCH_DEBOUNCE_MS = 600;
     const MAX_HISTORY_ROUNDS = 500;
+    const QUICK_MAGS = [5, 10, 50, 100];
 
     function extractUrlChatId() {
       const params = new URLSearchParams(window.location.search);
@@ -420,20 +354,20 @@
     let selectedUserId = "unknown_user";
     let selectedUserName = "自分";
 
-    let baseState = { rev: 0, players: {}, order: [], changeCount: 0, logs: [], customAwards: [] };
-    let latestState = { rev: 0, players: {}, order: [], changeCount: 0, logs: [], customAwards: [] };
+    let baseState = { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
+    let latestState = { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
 
     let pendingBatch = { userId: null, userName: null, delta: 0, timer: null };
     let inFlightBatch = null;
     let inFlightPromise = null;
 
+    let quickSign = -1;
     let rawDigits = "";
     let syncVersion = 0;
     let pollTimer = null;
     let isStoppedRoom = false;
     let isJoining = false;
     let pendingConfirmCallback = null;
-    let isCond2Open = false;
 
     // ==========================================
     // 画面スリープ防止（Wake Lock API）
@@ -456,7 +390,7 @@
 
     window.onload = async function() {
       requestWakeLock();
-      initCustomCondSelects();
+      setQuickSign(-1);
       try {
         await liff.init({ liffId: LIFF_ID });
         if (!liff.isLoggedIn()) {
@@ -764,17 +698,16 @@
           p.current = 0;
         }
         st.changeCount = finishedRound;
-        st.logs.unshift({ time: getNowTimeStr(), text: `🔄 合計0で自動ヤギり（第${finishedRound}戦確定）` });
+        st.logs.unshift({ time: '', text: `────── 第${finishedRound}戦確定 ──────`, divider: true });
         return true;
       }
       return false;
     }
 
     function buildEffectiveState() {
-      const cloned = JSON.parse(JSON.stringify(baseState || { rev: 0, players: {}, order: [], changeCount: 0, logs: [], customAwards: [] }));
+      const cloned = JSON.parse(JSON.stringify(baseState || { rev: 0, players: {}, order: [], changeCount: 0, logs: [] }));
       if (!Array.isArray(cloned.logs)) cloned.logs = [];
       if (!Array.isArray(cloned.order)) cloned.order = [];
-      if (!Array.isArray(cloned.customAwards)) cloned.customAwards = [];
 
       const batches = [];
       if (inFlightBatch && inFlightBatch.delta !== 0) batches.push(inFlightBatch);
@@ -823,7 +756,7 @@
     }
 
     function applyServerState(serverState) {
-      baseState = serverState || { rev: 0, players: {}, order: [], changeCount: 0, logs: [], customAwards: [] };
+      baseState = serverState || { rev: 0, players: {}, order: [], changeCount: 0, logs: [] };
       renderEffectiveState();
     }
 
@@ -891,7 +824,6 @@
       renderEffectiveState();
 
       syncVersion++;
-      const myVer = syncVersion;
 
       const sendTask = (async () => {
         try {
@@ -925,6 +857,33 @@
       await sendTask;
     }
 
+    // ==========================================
+    // 符号切り替えタブ＆4大クイックボタン
+    // ==========================================
+    function setQuickSign(sign) {
+      quickSign = sign < 0 ? -1 : 1;
+      const tabMinus = document.getElementById('tabMinus');
+      const tabPlus = document.getElementById('tabPlus');
+      tabMinus.className = 'sign-tab' + (quickSign < 0 ? ' active-minus' : '');
+      tabPlus.className = 'sign-tab' + (quickSign > 0 ? ' active-plus' : '');
+
+      QUICK_MAGS.forEach((mag, idx) => {
+        const btn = document.getElementById(`qBtn${idx}`);
+        if (!btn) return;
+        const val = quickSign * mag;
+        btn.innerText = formatSigned(val);
+        btn.className = 'q-btn ' + (quickSign < 0 ? 'q-minus' : 'q-plus');
+      });
+    }
+
+    function submitQuickMag(mag) {
+      const disp = document.getElementById('inputDisplay');
+      if (disp) disp.blur();
+      const delta = quickSign * mag;
+      if (!delta || delta === 0) return;
+      queueDelta(delta);
+    }
+
     function submitAddWithSign(sign) {
       const disp = document.getElementById('inputDisplay');
       if (disp) disp.blur();
@@ -935,13 +894,6 @@
 
       queueDelta(sign < 0 ? -num : num);
       flushPendingBatch();
-    }
-
-    function submitQuickAdd(delta) {
-      const disp = document.getElementById('inputDisplay');
-      if (disp) disp.blur();
-      if (!delta || delta === 0) return;
-      queueDelta(delta);
     }
 
     function getStreakIcon(p) {
@@ -963,26 +915,27 @@
       return '';
     }
 
+    // 見えない参加者を防ぐため、全プレイヤーを表示対象にする
     function getOrderedIds(includeLocalSelected) {
       const players = latestState.players || {};
       const order = Array.isArray(latestState.order) ? latestState.order : [];
       const result = [];
 
       order.forEach(uid => {
-        if (uid && uid !== 'unknown_user' && players[uid] && !result.includes(uid)) {
+        if (uid && players[uid] && !result.includes(uid)) {
           result.push(uid);
         }
       });
       Object.keys(players).forEach(uid => {
-        if (uid && uid !== 'unknown_user' && !result.includes(uid)) {
+        if (uid && !result.includes(uid)) {
           result.push(uid);
         }
       });
       if (includeLocalSelected) {
-        if (myUserId && myUserId !== 'unknown_user' && !result.includes(myUserId) && Object.keys(players).length === 0) {
+        if (myUserId && !result.includes(myUserId) && Object.keys(players).length === 0) {
           result.push(myUserId);
         }
-        if (selectedUserId && selectedUserId !== 'unknown_user' && !result.includes(selectedUserId) && players[selectedUserId]) {
+        if (selectedUserId && !result.includes(selectedUserId) && players[selectedUserId]) {
           result.push(selectedUserId);
         }
       }
@@ -1349,12 +1302,18 @@
         container.innerHTML = '<div class="empty-msg">まだ操作履歴はありません</div>';
         return;
       }
-      container.innerHTML = logs.map(item => `
-        <div class="log-item">
-          <span class="log-time">${escapeHtml(item.time || '')}</span>
-          <span class="log-text">${escapeHtml(item.text || '')}</span>
-        </div>
-      `).join('');
+      container.innerHTML = logs.map(item => {
+        const text = String(item.text || '');
+        if (item.divider || /^─+.*─+$/.test(text)) {
+          return `<div class="log-divider">${escapeHtml(text)}</div>`;
+        }
+        return `
+          <div class="log-item">
+            <span class="log-time">${escapeHtml(item.time || '')}</span>
+            <span class="log-text">${escapeHtml(text)}</span>
+          </div>
+        `;
+      }).join('');
     }
 
     function openLogModal() {
@@ -1366,375 +1325,7 @@
       document.getElementById('logModalBg').style.display = 'none';
     }
 
-    // ==========================================
-    // カスタム称号（全22種 ＋ AND2条件 ＋ 見切れ解消）
-    // ==========================================
-    const CUSTOM_COND_GROUPS = [
-      {
-        label: '👤 プレイヤー指定',
-        items: [
-          { value: 'player_id', label: '特定のメンバーを指定', inputMode: 'member' },
-          { value: 'name_includes', label: '名前に「〇〇」を含む', inputMode: 'text', placeholder: '例: 田中' }
-        ]
-      },
-      {
-        label: '🏆 最終順位・収支',
-        items: [
-          { value: 'rank_first', label: '最終順位が総合1位', inputMode: 'none' },
-          { value: 'rank_last', label: '最終順位が最下位（ビリ）', inputMode: 'none' },
-          { value: 'rank_not_last', label: '最下位（ビリ）ではない', inputMode: 'none' },
-          { value: 'rank_exact', label: '最終順位が「○位」', inputMode: 'num', placeholder: '順位を入力（例: 3）' },
-          { value: 'total_le', label: '最終収支が「〇〇 以下」', inputMode: 'num', placeholder: '例: -300' },
-          { value: 'total_ge', label: '最終収支が「〇〇 以上」', inputMode: 'num', placeholder: '例: 300' },
-          { value: 'total_range', label: '最終収支が「〇〇 〜 〇〇」の範囲内', inputMode: 'range', ph1: '最小（例: -10）', ph2: '最大（例: 10）' }
-        ]
-      },
-      {
-        label: '🎯 開幕戦・最終戦（オーラス）',
-        items: [
-          { value: 'first_round_top', label: '開幕戦（第1戦）で1位', inputMode: 'none' },
-          { value: 'first_round_last', label: '開幕戦（第1戦）で最下位', inputMode: 'none' },
-          { value: 'last_round_plus', label: '最終戦（オーラス）でプラス', inputMode: 'none' },
-          { value: 'last_round_minus', label: '最終戦（オーラス）でマイナス', inputMode: 'none' },
-          { value: 'last_round_comeback', label: '最終戦（オーラス）で逆転1位', inputMode: 'none' }
-        ]
-      },
-      {
-        label: '⚡ 単発スコア・瞬間風速',
-        items: [
-          { value: 'round_le', label: '1戦で「〇〇 以下」の大敗', inputMode: 'num', placeholder: '例: -150' },
-          { value: 'round_ge', label: '1戦で「〇〇 以上」の大勝', inputMode: 'num', placeholder: '例: 150' },
-          { value: 'cum_min_le', label: '対局中に一度でも累計が「〇〇 以下」', inputMode: 'num', placeholder: '例: -300' }
-        ]
-      },
-      {
-        label: '🔥 回数・連勝連敗',
-        items: [
-          { value: 'win_count_ge', label: 'プラスの戦数が「○回以上」', inputMode: 'num', placeholder: '例: 3' },
-          { value: 'loss_count_ge', label: 'マイナスの戦数が「○回以上」', inputMode: 'num', placeholder: '例: 3' },
-          { value: 'zero_count_ge', label: '変動0（引き分け）が「○回以上」', inputMode: 'num', placeholder: '例: 2' },
-          { value: 'win_streak_ge', label: '「○連勝以上」を記録', inputMode: 'num', placeholder: '例: 3' },
-          { value: 'loss_streak_ge', label: '「○連敗以上」を記録', inputMode: 'num', placeholder: '例: 3' }
-        ]
-      }
-    ];
-
-    function findCondMeta(type) {
-      for (const grp of CUSTOM_COND_GROUPS) {
-        for (const item of grp.items) {
-          if (item.value === type) return item;
-        }
-      }
-      return { value: type, label: type, inputMode: 'none' };
-    }
-
-    function initCustomCondSelects() {
-      const html = CUSTOM_COND_GROUPS.map(grp => {
-        const opts = grp.items.map(it => `<option value="${it.value}">${escapeHtml(it.label)}</option>`).join('');
-        return `<optgroup label="${escapeHtml(grp.label)}">${opts}</optgroup>`;
-      }).join('');
-      document.getElementById('customCond1Type').innerHTML = html;
-      document.getElementById('customCond2Type').innerHTML = html;
-      document.getElementById('customCond2Type').value = 'rank_last';
-    }
-
-    function buildMemberSelectHtml(slot) {
-      const ids = getOrderedIds(true);
-      const players = latestState.players || {};
-      if (ids.length === 0) {
-        return `<select id="ca${slot}Member" class="ca-select"><option value="">メンバーがいません</option></select>`;
-      }
-      const opts = ids.map(uid => {
-        const name = (uid === myUserId) ? myUserName : ((players[uid] && players[uid].name) || '名無し');
-        return `<option value="${escapeHtml(uid)}" data-name="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
-      }).join('');
-      return `<select id="ca${slot}Member" class="ca-select">${opts}</select>`;
-    }
-
-    function onCustomCondChange(slot) {
-      const type = document.getElementById(`customCond${slot}Type`).value;
-      const container = document.getElementById(`customCond${slot}Inputs`);
-      const meta = findCondMeta(type);
-
-      if (meta.inputMode === 'none') {
-        container.innerHTML = '';
-        container.style.display = 'none';
-      } else if (meta.inputMode === 'member') {
-        container.style.display = 'block';
-        container.innerHTML = buildMemberSelectHtml(slot);
-      } else if (meta.inputMode === 'range') {
-        container.style.display = 'block';
-        container.innerHTML = `
-          <div class="ca-range-row">
-            <input id="ca${slot}Val1" class="ca-input" type="text" placeholder="${escapeHtml(meta.ph1)}">
-            <span class="ca-range-sep">〜</span>
-            <input id="ca${slot}Val2" class="ca-input" type="text" placeholder="${escapeHtml(meta.ph2)}">
-          </div>
-        `;
-      } else {
-        container.style.display = 'block';
-        container.innerHTML = `<input id="ca${slot}Val1" class="ca-input" type="text" placeholder="${escapeHtml(meta.placeholder || '')}">`;
-      }
-    }
-
-    function toggleCond2(open) {
-      isCond2Open = open;
-      document.getElementById('customCond2Block').style.display = open ? 'flex' : 'none';
-      document.getElementById('addCond2Btn').style.display = open ? 'none' : 'inline-block';
-      if (open) {
-        onCustomCondChange(2);
-      }
-    }
-
-    function normalizeNumStr(str) {
-      return String(str || '')
-        .trim()
-        .replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
-        .replace(/[－ー—]/g, '-')
-        .replace(/[＋]/g, '+');
-    }
-
-    function readCondFromSlot(slot) {
-      const type = document.getElementById(`customCond${slot}Type`).value;
-      const meta = findCondMeta(type);
-
-      if (meta.inputMode === 'none') {
-        return { ok: true, cond: { type: type, val1: '', val2: '' } };
-      }
-
-      if (meta.inputMode === 'member') {
-        const sel = document.getElementById(`ca${slot}Member`);
-        if (!sel || !sel.value) {
-          return { ok: false, error: `条件${slot}の対象メンバーを選択してください` };
-        }
-        const opt = sel.options[sel.selectedIndex];
-        const targetName = opt ? (opt.getAttribute('data-name') || opt.textContent) : '';
-        return { ok: true, cond: { type: type, val1: sel.value, val2: targetName } };
-      }
-
-      if (meta.inputMode === 'text') {
-        const el = document.getElementById(`ca${slot}Val1`);
-        const v = el ? el.value.trim() : '';
-        if (!v) {
-          return { ok: false, error: `条件${slot}の対象となる文字を入力してください` };
-        }
-        return { ok: true, cond: { type: type, val1: v, val2: '' } };
-      }
-
-      if (meta.inputMode === 'num') {
-        const el = document.getElementById(`ca${slot}Val1`);
-        const v = normalizeNumStr(el ? el.value : '');
-        if (!v || isNaN(Number(v))) {
-          return { ok: false, error: `条件${slot}の数値を正しく入力してください` };
-        }
-        return { ok: true, cond: { type: type, val1: v, val2: '' } };
-      }
-
-      if (meta.inputMode === 'range') {
-        const el1 = document.getElementById(`ca${slot}Val1`);
-        const el2 = document.getElementById(`ca${slot}Val2`);
-        const v1 = normalizeNumStr(el1 ? el1.value : '');
-        const v2 = normalizeNumStr(el2 ? el2.value : '');
-        if (!v1 || !v2 || isNaN(Number(v1)) || isNaN(Number(v2))) {
-          return { ok: false, error: `条件${slot}の範囲（最小〜最大）を正しく入力してください` };
-        }
-        return { ok: true, cond: { type: type, val1: v1, val2: v2 } };
-      }
-
-      return { ok: false, error: '条件の読み取りに失敗しました' };
-    }
-
-    function formatSingleCondDesc(cond) {
-      if (!cond || !cond.type) return '';
-      const t = cond.type;
-      const v1 = cond.val1 !== undefined ? cond.val1 : '';
-      const v2 = cond.val2 !== undefined ? cond.val2 : '';
-
-      if (t === 'player_id') {
-        const p = (latestState.players || {})[v1];
-        const dispName = (v1 === myUserId) ? myUserName : ((p && p.name) || v2 || '指定メンバー');
-        return `メンバーが「${dispName}」`;
-      }
-      if (t === 'name_includes') return `名前に「${v1}」を含む`;
-      if (t === 'rank_first') return '最終順位が総合1位';
-      if (t === 'rank_last') return '最終順位が最下位（ビリ）';
-      if (t === 'rank_not_last') return '最下位（ビリ）ではない';
-      if (t === 'rank_exact') return `最終順位が ${v1}位`;
-      if (t === 'total_le') return `最終収支が ${v1} 以下`;
-      if (t === 'total_ge') return `最終収支が ${formatSigned(Number(v1))} 以上`;
-      if (t === 'total_range') return `最終収支が ${v1} 〜 ${v2} の範囲内`;
-      if (t === 'first_round_top') return '開幕戦（第1戦）で1位';
-      if (t === 'first_round_last') return '開幕戦（第1戦）で最下位';
-      if (t === 'last_round_plus') return '最終戦（オーラス）でプラス';
-      if (t === 'last_round_minus') return '最終戦（オーラス）でマイナス';
-      if (t === 'last_round_comeback') return '最終戦（オーラス）で逆転1位';
-      if (t === 'round_le') return `1戦で ${v1} 以下の大敗`;
-      if (t === 'round_ge') return `1戦で ${formatSigned(Number(v1))} 以上の大勝`;
-      if (t === 'cum_min_le') return `対局中に一度でも累計が ${v1} 以下`;
-      if (t === 'win_count_ge') return `プラスの戦数が ${v1}回以上`;
-      if (t === 'loss_count_ge') return `マイナスの戦数が ${v1}回以上`;
-      if (t === 'zero_count_ge') return `変動0の戦が ${v1}回以上`;
-      if (t === 'win_streak_ge') return `${v1}連勝以上を記録`;
-      if (t === 'loss_streak_ge') return `${v1}連敗以上を記録`;
-      return '';
-    }
-
-    function formatRuleCondLines(rule) {
-      const c1 = rule.cond1 || (rule.condType ? { type: rule.condType, val1: rule.condValue, val2: '' } : null);
-      const c2 = rule.cond2 || null;
-      const line1 = c1 ? `条件: ${escapeHtml(formatSingleCondDesc(c1))}` : '';
-      const line2 = c2 ? `<br>かつ: ${escapeHtml(formatSingleCondDesc(c2))}` : '';
-      return line1 + line2;
-    }
-
-    function renderCustomAwardsList() {
-      const list = Array.isArray(latestState.customAwards) ? latestState.customAwards : [];
-      document.getElementById('customAwardCount').innerText = `${list.length} / 20`;
-      const container = document.getElementById('customAwardList');
-
-      if (list.length === 0) {
-        container.innerHTML = '<div style="font-size:11px; color:#6c757d; text-align:center; padding:4px 0;">なにもない</div>';
-        return;
-      }
-
-      container.innerHTML = list.map(rule => {
-        const isMine = Boolean(rule.creatorId && rule.creatorId === myUserId);
-        const onceBadge = rule.oneTime ? '<span class="ca-once-badge">1回限り</span>' : '';
-
-        if (rule.secret && !isMine) {
-          const who = rule.creatorName ? `${escapeHtml(rule.creatorName)}の` : '誰かの';
-          return `
-            <div class="ca-item">
-              <div class="ca-item-info">
-                <div class="ca-item-title">${who}秘密称号${onceBadge}</div>
-                <div class="ca-item-cond">決算後にわかるよ</div>
-              </div>
-              <button class="ca-del-btn" onclick="deleteCustomAward('${escapeHtml(rule.id)}')">削除</button>
-            </div>
-          `;
-        }
-
-        if (rule.secret && isMine) {
-          return `
-            <div class="ca-item">
-              <div class="ca-item-info">
-                <div class="ca-item-title ca-item-mine">${escapeHtml(rule.title)}${onceBadge}</div>
-                <div class="ca-item-cond">${formatRuleCondLines(rule)}<br>(ほかの人には非公開)</div>
-              </div>
-              <button class="ca-del-btn" onclick="deleteCustomAward('${escapeHtml(rule.id)}')">削除</button>
-            </div>
-          `;
-        }
-
-        return `
-          <div class="ca-item">
-            <div class="ca-item-info">
-              <div class="ca-item-title">✨ ${escapeHtml(rule.title)}${onceBadge}</div>
-              <div class="ca-item-cond">${formatRuleCondLines(rule)}</div>
-            </div>
-            <button class="ca-del-btn" onclick="deleteCustomAward('${escapeHtml(rule.id)}')">削除</button>
-          </div>
-        `;
-      }).join('');
-    }
-
-    async function submitCustomAward() {
-      const title = document.getElementById('customAwardTitle').value.trim();
-      if (!title) {
-        alert('称号名を入力してください');
-        return;
-      }
-
-      const res1 = readCondFromSlot(1);
-      if (!res1.ok) {
-        alert(res1.error);
-        return;
-      }
-
-      let cond2 = null;
-      if (isCond2Open) {
-        const res2 = readCondFromSlot(2);
-        if (!res2.ok) {
-          alert(res2.error);
-          return;
-        }
-        cond2 = res2.cond;
-      }
-
-      const secret = document.getElementById('customAwardSecret').checked;
-      const oneTime = document.getElementById('customAwardOneTime').checked;
-
-      document.getElementById('customAwardTitle').value = '';
-      document.getElementById('customAwardSecret').checked = false;
-      document.getElementById('customAwardOneTime').checked = false;
-      onCustomCondChange(1);
-      if (isCond2Open) toggleCond2(false);
-
-      syncVersion++;
-      const myVer = syncVersion;
-      setSyncBusy(true);
-      try {
-        const res = await callGasApi({
-          action: 'addCustomAward',
-          chatId: chatId,
-          userId: myUserId,
-          actorName: myUserName,
-          cond1: res1.cond,
-          cond2: cond2,
-          title: title,
-          secret: secret,
-          oneTime: oneTime
-        });
-        if (res && res.ok && res.state) {
-          if (myVer === syncVersion) {
-            applyServerState(res.state);
-          } else {
-            baseState.customAwards = res.state.customAwards;
-            renderEffectiveState();
-          }
-          renderCustomAwardsList();
-        } else if (res && res.error) {
-          alert(res.error);
-        }
-      } catch (e) {
-        alert('カスタム称号の登録に失敗しました');
-      } finally {
-        setSyncBusy(false);
-      }
-    }
-
-    async function deleteCustomAward(awardId) {
-      if (!confirm('このカスタム称号を削除しますか？')) return;
-      syncVersion++;
-      const myVer = syncVersion;
-      if (Array.isArray(baseState.customAwards)) {
-        baseState.customAwards = baseState.customAwards.filter(item => item && item.id !== awardId);
-      }
-      renderEffectiveState();
-      renderCustomAwardsList();
-
-      setSyncBusy(true);
-      try {
-        const res = await callGasApi({
-          action: 'deleteCustomAward',
-          chatId: chatId,
-          awardId: awardId
-        });
-        if (res && res.ok && res.state && myVer === syncVersion) {
-          applyServerState(res.state);
-          renderCustomAwardsList();
-        }
-      } catch (e) {
-        alert('削除に失敗しました');
-      } finally {
-        setSyncBusy(false);
-      }
-    }
-
     function openAwardModal() {
-      onCustomCondChange(1);
-      if (isCond2Open) onCustomCondChange(2);
-      renderCustomAwardsList();
       document.getElementById('awardModalBg').style.display = 'flex';
     }
 
@@ -1758,7 +1349,7 @@
       let html = '';
 
       orderedIds.forEach(uid => {
-        if (!uid || uid === 'unknown_user') return;
+        if (!uid) return;
         const p = players[uid];
         const name = (uid === myUserId) ? myUserName : ((p && p.name) || (uid === selectedUserId ? selectedUserName : '名無し'));
         const prev = p ? (Number(p.prev) || 0) : 0;
@@ -1821,15 +1412,17 @@
       if (document.getElementById('graphModalBg').style.display === 'flex') {
         drawTrendChart();
       }
-      if (document.getElementById('awardModalBg').style.display === 'flex') {
-        renderCustomAwardsList();
-      }
     }
 
     async function fetchState() {
       const reqVer = syncVersion;
+      const currentBaseRev = Number(baseState.rev) || 0;
       try {
-        const res = await callGasApi({ action: 'getState', chatId: chatId });
+        const res = await callGasApi({
+          action: 'getState',
+          chatId: chatId,
+          rev: currentBaseRev
+        });
         if (res && res.stopped) {
           isStoppedRoom = true;
           if (pollTimer) clearTimeout(pollTimer);
@@ -1837,14 +1430,19 @@
           setRoomStatus(false, "🛑 停止中");
           return;
         }
-        if (res && res.ok && res.state && reqVer === syncVersion) {
-          const incomingRev = Number(res.state.rev) || 0;
-          const currentBaseRev = Number(baseState.rev) || 0;
-          if (incomingRev !== currentBaseRev) {
-            baseState = res.state;
-            renderEffectiveState();
+        if (res && res.ok && reqVer === syncVersion) {
+          if (res.changed === false) {
+            updateConnectedStatus(baseState.players);
+            return;
           }
-          updateConnectedStatus(res.state.players);
+          if (res.state) {
+            const incomingRev = Number(res.state.rev) || 0;
+            if (incomingRev !== currentBaseRev) {
+              baseState = res.state;
+              renderEffectiveState();
+            }
+            updateConnectedStatus(res.state.players);
+          }
         }
       } catch (e) {
         setRoomStatus(false, "⚠️ GAS通信エラー");
@@ -1875,7 +1473,7 @@
         const removed = p.ops.pop();
         recalcLocalPlayer(p);
         if (!Array.isArray(baseState.logs)) baseState.logs = [];
-        baseState.logs.unshift({ time: getNowTimeStr(), text: `↩ ${myUserName}が ${selectedUserName} の ${formatSigned(removed)} を取消` });
+        baseState.logs.unshift({ time: getNowTimeStr(), text: `↩️ ${myUserName}が ${selectedUserName} の ${formatSigned(removed)} を取消` });
         checkAndAutoCommitOnState(baseState);
         renderEffectiveState();
 
@@ -1921,7 +1519,7 @@
         const removed = p.ops.pop();
         recalcLocalPlayer(p);
         if (!Array.isArray(baseState.logs)) baseState.logs = [];
-        baseState.logs.unshift({ time: getNowTimeStr(), text: `↩ ${myUserName}が自動ヤギり(第${rolledBackRound}戦)を戻し ${selectedUserName} の ${formatSigned(removed)} を取消` });
+        baseState.logs.unshift({ time: getNowTimeStr(), text: `↩️ ${myUserName}が第${rolledBackRound}戦確定を戻し ${selectedUserName} の ${formatSigned(removed)} を取消` });
         renderEffectiveState();
 
         const dot = document.getElementById('syncDot');
